@@ -48,12 +48,13 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         group.add(user);
 
         const pass = new Adw.PasswordEntryRow({title: 'Passwort (Schlüsselbund)', show_apply_button: true});
-        lookupPassword().then(p => {
+        this._lookup().then(p => {
             if (p)
                 pass.text = p;
         }).catch(e => console.warn(`Passwort lesen: ${e.message}`));
         pass.connect('apply', () => {
             // Die Extension liest das Passwort bei jedem Login neu aus dem Schlüsselbund
+            this._passwordPromise = null;
             storePassword(pass.text)
                 .catch(e => this._toast(group, `Speichern fehlgeschlagen: ${e.message}`));
         });
@@ -74,20 +75,7 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         settings.bind('allow-sim-switch', sim, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(sim);
 
-        const hidden = new Adw.EntryRow({
-            title: 'Ausgeblendete SIM-Slots (z. B. leere: 2)',
-            show_apply_button: true,
-        });
-        const slotsText = () => settings.get_value('hidden-sim-slots').deepUnpack().join(', ');
-        hidden.text = slotsText();
-        hidden.connect('apply', () => {
-            const slots = [...new Set(hidden.text.split(/[\s,;]+/).map(Number)
-                .filter(n => Number.isInteger(n) && n > 0))];
-            settings.set_value('hidden-sim-slots', new GLib.Variant('ai', slots));
-            hidden.text = slotsText();
-        });
-        settings.bind('allow-sim-switch', hidden, 'sensitive', Gio.SettingsBindFlags.GET);
-        group.add(hidden);
+        group.add(this._simSlotsRow(settings));
 
         const test = new Adw.ActionRow({title: 'Verbindung testen', subtitle: 'Übernimmt zuerst offene Eingaben'});
         const btn = new Gtk.Button({label: 'Testen', valign: Gtk.Align.CENTER});
@@ -102,7 +90,7 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
             const client = new RouterClient({
                 host: host.text,
                 username: user.text.trim(),
-                getPassword: async () => pass.text || lookupPassword(),
+                getPassword: async () => pass.text || this._lookup(),
                 fingerprint: settings.get_string('cert-fingerprint'),
                 onFingerprint: fp => settings.set_string('cert-fingerprint', fp),
             });
@@ -122,6 +110,65 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         group.add(test);
 
         return group;
+    }
+
+    // Ein Schalter pro SIM-Slot; Slots kommen vom Router, sonst 1–3 als Ersatz
+    _simSlotsRow(settings) {
+        const row = new Adw.ExpanderRow({
+            title: 'SIM-Slots im Menü',
+            subtitle: 'Leere Slots ausschalten – der Router meldet nicht, ob ein Slot belegt ist',
+        });
+        settings.bind('allow-sim-switch', row, 'sensitive', Gio.SettingsBindFlags.GET);
+
+        const hidden = () => settings.get_value('hidden-sim-slots').deepUnpack();
+        const setHidden = (pos, hide) => {
+            const set = new Set(hidden());
+            if (hide)
+                set.add(pos);
+            else
+                set.delete(pos);
+            settings.set_value('hidden-sim-slots',
+                new GLib.Variant('ai', [...set].sort((x, y) => x - y)));
+        };
+
+        let rows = [];
+        const build = slots => {
+            rows.forEach(r => row.remove(r));
+            rows = slots.map(({position, title}) => {
+                const sw = new Adw.SwitchRow({title, active: !hidden().includes(position)});
+                sw.connect('notify::active', () => setHidden(position, !sw.active));
+                row.add_row(sw);
+                return sw;
+            });
+        };
+
+        const fallback = () => [...new Set([1, 2, 3, ...hidden()])].sort((x, y) => x - y)
+            .map(position => ({position, title: `SIM ${position}`}));
+        build(fallback());
+
+        if (settings.get_string('host')) {
+            const client = new RouterClient({
+                host: settings.get_string('host'),
+                username: settings.get_string('username'),
+                getPassword: () => this._lookup(),
+                fingerprint: settings.get_string('cert-fingerprint'),
+                onFingerprint: fp => settings.set_string('cert-fingerprint', fp),
+            });
+            client.getSimCards().then(cards => {
+                if (!cards.length)
+                    return;
+                // Ein Slot kann mehrere eSIM-Profile haben → pro Position eine Zeile
+                const byPos = new Map();
+                for (const c of cards) {
+                    if (c.position !== null && !byPos.has(c.position))
+                        byPos.set(c.position, c);
+                }
+                build([...byPos.values()].sort((x, y) => x.position - y.position)
+                    .map(c => ({position: c.position, title: c.esimProfile ? `SIM ${c.position} (eSIM)` : `SIM ${c.position}`})));
+            }).catch(e => console.warn(`SIM-Slots laden: ${e.message}`))
+                .finally(() => client.destroy());
+        }
+        return row;
     }
 
     _certGroup(settings) {
@@ -174,6 +221,15 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
             settings.set_string('signal-metric', METRICS[combo.selected][0]));
         group.add(combo);
         return group;
+    }
+
+    // Eine gemeinsame Schlüsselbund-Abfrage: parallele Lookups blockieren sich gegenseitig (~10 s)
+    _lookup() {
+        this._passwordPromise ??= lookupPassword().catch(e => {
+            this._passwordPromise = null;
+            throw e;
+        });
+        return this._passwordPromise;
     }
 
     _toast(widget, title) {

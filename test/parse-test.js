@@ -52,6 +52,7 @@ eq(cards.map(P.simLabel), ['SIM 1', 'SIM 2', 'SIM 3 (eSIM 1)'], 'sim labels');
 eq(cards.map(c => P.isActiveSim(r, c)), [true, false, false], 'active SIM 1');
 eq(P.isActiveSim({activeSim: 3, esimProfile: '1'}, cards[2]), true, 'active eSIM profile 1');
 eq(P.isActiveSim({activeSim: 3, esimProfile: '2'}, cards[2]), false, 'other eSIM profile');
+eq(P.normalizeModem({active_sim: 3, esim_profile: '1'}).esimProfile, '1', 'modem esim_profile');
 
 const ms = P.parseModems(load('modems_status_5g_nsa.json'));
 eq(ms.length, 2, 'two modems');

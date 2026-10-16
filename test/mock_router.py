@@ -2,7 +2,7 @@
 """Mock-RutOS-Router für Tests: python3 test/mock_router.py PORT [CERT KEY]
 
 Endpunkte: POST /api/login, GET /api/modems/status, GET /api/sim_cards/status,
-PUT /api/sim_cards/config/{id}, POST /api/modems/{id}/actions/restart_connection,
+PUT /api/sim_cards/config/{id}, POST /api/modems/{id}/actions/{switch_sim,restart_connection},
 POST /_test/expire (alle Tokens ungültig), POST /_test/fixture?name=…
 """
 import json, secrets, ssl, sys
@@ -16,6 +16,7 @@ USERS = {"monitor": ("secret", True), "readonly": ("secret", False)}
 tokens = {}  # token → Benutzer
 state = {"fixture": "modems_status.json", "active": {}}  # modem → (slot, esim_profile)
 sim_cards = json.loads((FIX / "rutm30_sim_cards_status.json").read_text())["data"]
+EMPTY_SLOTS = {2}  # wie beim RUTM30 des Nutzers: Slot 2 unbelegt
 
 
 class H(BaseHTTPRequestHandler):
@@ -45,6 +46,17 @@ class H(BaseHTTPRequestHandler):
                 return self.reply(200, {"success": True, "data": {"username": user, "token": t, "expires": 299}})
             return self.reply(401, {"success": False, "errors": [{"code": 121, "error": "Authentication failed", "source": "Login"}]})
         parts = u.path.strip("/").split("/")
+        if parts[:2] == ["api", "modems"] and parts[3:] == ["actions", "switch_sim"]:
+            if not self.can_write():
+                return
+            # Nächster Slot in Reihenfolge, auch wenn er leer ist
+            cards = [c for c in sim_cards if c["modem"] == parts[2]]
+            cur = state["active"].get(parts[2], (1, None))
+            idx = next((i for i, c in enumerate(cards)
+                        if int(c["sim"]) == cur[0] and c.get("esim_profile") == cur[1]), -1)
+            nxt = cards[(idx + 1) % len(cards)]
+            state["active"][parts[2]] = (int(nxt["sim"]), nxt.get("esim_profile"))
+            return self.reply(200, {"success": True})
         if parts[:2] == ["api", "modems"] and parts[3:] == ["actions", "restart_connection"]:
             if not self.can_write():
                 return
@@ -105,6 +117,10 @@ class H(BaseHTTPRequestHandler):
                         m["esim_profile"] = profile
                     else:
                         m.pop("esim_profile", None)
+                    if m["active_sim"] in EMPTY_SLOTS:
+                        m["simstate"] = "Not inserted"
+                        for k in ("conntype", "ntype", "rssi", "rsrp", "rsrq", "sinr", "band", "ca_signal"):
+                            m.pop(k, None)
             return self.reply(200, data)
         if self.path == "/api/sim_cards/status":
             return self.reply(200, {"success": True, "data": sim_cards})

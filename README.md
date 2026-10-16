@@ -11,7 +11,8 @@ Hintergrund: [docs/BRIEF.md](docs/BRIEF.md), API-Notizen: [docs/API.md](docs/API
 ## Installation
 
 ```bash
-make install          # packt und installiert nach ~/.local/share/gnome-shell/extensions
+make install          # packt und installiert nach ~/.local/share/gnome-shell/extensions,
+                      # dazu Starter + Icon nach ~/.local/share/applications bzw. icons
 # Wayland: einmal ab- und wieder anmelden
 gnome-extensions enable teltonika-indicator@mstiefenhofer
 gnome-extensions prefs teltonika-indicator@mstiefenhofer
@@ -30,9 +31,13 @@ braucht er zusätzlich Schreibrecht für die mobilen Einstellungen.
   Ändert er sich, wird die Verbindung blockiert, bis er in den Einstellungen gelöscht wird.
 - Ist der Router nicht erreichbar, wird das Abfrageintervall still verlängert (exponentieller Backoff bis 5 min).
 - Bei mehreren Modems wird das erste mit Signal angezeigt.
-- SIM-Wechsel (Untermenü, nach Bestätigung): Ziel-SIM wird Standard-SIM, danach baut der Router die Verbindung neu auf
-  (wie „Make active“ in der WebUI). Die Erweiterung fragt dann alle 5 s ab, bis die neue SIM gemeldet wird.
-  Leere Slots lassen sich in den Einstellungen ausblenden, weil die API nicht meldet, ob ein Slot belegt ist.
+- SIM wechseln (Untermenü, nach Bestätigung): `switch_sim` („nächste SIM“), notfalls mehrmals, bis die Ziel-SIM
+  aktiv ist – auch über leere Slots hinweg. Die Standard-SIM bleibt unverändert.
+- Standard-SIM festlegen (eigenes Untermenü): ändert nur die Konfiguration, die aktive Verbindung bleibt.
+- „Beenden“ im Menü deaktiviert die Erweiterung (bleibt auch nach Neuanmeldung aus).
+  Wieder starten über den Starter „Teltonika Indicator“ in der App-Übersicht
+  (führt `gnome-extensions enable …` aus, keine Neuanmeldung nötig).
+- Leere Slots lassen sich in den Einstellungen ausblenden, weil die API nicht meldet, ob ein Slot belegt ist.
 
 ## Entwicklung
 

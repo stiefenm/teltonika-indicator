@@ -20,7 +20,9 @@ import {
 const MAX_BACKOFF_S = 300;
 // Nach einem SIM-Wechsel häufiger abfragen, bis die neue SIM gemeldet wird
 const SIM_SWITCH_POLL_S = 5;
-const SIM_SWITCH_TIMEOUT_S = 120;
+const now = () => GLib.get_monotonic_time() / 1e6;
+// Je Schritt (switch_sim) auf die nächste SIM warten, bevor abgebrochen wird
+const SIM_HOP_TIMEOUT_S = 90;
 
 const QUALITY_ICONS = [
     'network-cellular-signal-none-symbolic',
@@ -90,7 +92,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._busy = false;
         this._modem = null;
         this._simCards = [];
-        this._switching = null; // {target, started} während eines SIM-Wechsels
+        this._switching = null; // {target, hops, maxHops, lastKey, hopStarted} während eines SIM-Wechsels
         this._cancellable = new Gio.Cancellable();
 
         const box = new St.BoxLayout({style_class: 'panel-status-menu-box'});
@@ -140,11 +142,24 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._simItem.visible = false;
         this._simKey = '';
         this.menu.addMenuItem(this._simItem);
+        this._defaultItem = new PopupMenu.PopupSubMenuMenuItem('Standard-SIM');
+        this._defaultItem.visible = false;
+        this._defaultKey = '';
+        this.menu.addMenuItem(this._defaultItem);
         this.menu.addAction('Router-Weboberfläche öffnen', () => {
             if (this._client?.baseUrl)
                 Gio.AppInfo.launch_default_for_uri(this._client.baseUrl, null);
         });
         this.menu.addAction('Einstellungen', () => this._ext.openPreferences());
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        // Deaktiviert die Erweiterung (bleibt über Neuanmeldungen aus);
+        // Neustart über den Starter „Teltonika Indicator“ (gnome-extensions enable)
+        this.menu.addAction('Beenden', () => {
+            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                Main.extensionManager.disableExtension(this._ext.uuid);
+                return GLib.SOURCE_REMOVE;
+            });
+        });
 
         this._setStatus('Verbinde …');
     }
@@ -198,10 +213,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
                 throw Object.assign(new Error('Router-Adresse in den Einstellungen eintragen'), {kind: 'config'});
             const client = this._ensureClient();
             const modems = await client.getModems(this._cancellable);
-            if (this._settings.get_boolean('allow-sim-switch'))
-                this._simCards = await this._fetchSimCards(client);
-            else
-                this._simCards = [];
+            this._simCards = await this._fetchSimCards(client);
             if (this._cancellable.is_cancelled())
                 return;
             this._failures = 0;
@@ -238,9 +250,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
     _handleError(e, interval) {
         this._failures++;
         const kind = e.kind ?? 'network';
-        if (this._switching &&
-            GLib.get_monotonic_time() / 1e6 - this._switching.started > SIM_SWITCH_TIMEOUT_S)
-            this._switching = null;
+        if (this._switching && now() - this._switching.hopStarted > SIM_HOP_TIMEOUT_S)
+            this._finishSwitch('SIM-Wechsel nicht bestätigt – Router nicht erreichbar');
         this._modem = null;
         this._icon.icon_name = ICON_OFFLINE;
         this._setQualityClass(-1);
@@ -292,20 +303,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
         }
         const time = this._lastUpdate?.format('%H:%M:%S') ?? '';
         this._setStatus(`${m.name || 'Modem'} · Stand ${time}`);
-        if (this._switching) {
-            const {target, started} = this._switching;
-            const elapsed = GLib.get_monotonic_time() / 1e6 - started;
-            if (isActiveSim(m, target) && m.netType) {
-                this._switching = null;
-                Main.notify('Teltonika Router', `${simLabel(target)} ist aktiv (${formatLabel(m)})`);
-            } else if (elapsed > SIM_SWITCH_TIMEOUT_S) {
-                this._switching = null;
-                Main.notify('Teltonika Router',
-                    `SIM-Wechsel nicht bestätigt – aktiv ist ${this._activeSimText(m)}`);
-            } else {
-                this._setStatus(`Wechsle zu ${simLabel(target)} …`);
-            }
-        }
+        if (this._switching)
+            this._advanceSwitch(m);
         this._updateSimItem();
         const r = this._rows;
         r.operator.setValue(m.operator);
@@ -324,18 +323,24 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
     _activeSimText(m) {
         const card = this._simCards.find(c => (!c.modem || c.modem === m.id) && isActiveSim(m, c));
-        return card ? simLabel(card) : `SIM ${m.activeSim}`;
+        if (card)
+            return simLabel(card);
+        // modems/status meldet esim_profile, solange eine eSIM aktiv ist
+        return simLabel({position: m.activeSim, esimProfile: m.esimProfile});
     }
 
-    // Wechselziele: SIMs dieses Modems außer der aktiven und den ausgeblendeten Slots
-    _simTargets() {
+    // SIMs dieses Modems ohne ausgeblendete Slots
+    _visibleSimCards() {
         const m = this._modem;
         if (!m || !this._settings.get_boolean('allow-sim-switch'))
             return [];
         const hidden = this._settings.get_value('hidden-sim-slots').deepUnpack();
         return this._simCards.filter(c =>
-            (!c.modem || c.modem === m.id) && c.position !== null &&
-            !hidden.includes(c.position) && !isActiveSim(m, c));
+            (!c.modem || c.modem === m.id) && c.position !== null && !hidden.includes(c.position));
+    }
+
+    _simTargets() {
+        return this._visibleSimCards().filter(c => !isActiveSim(this._modem, c));
     }
 
     _updateSimItem() {
@@ -343,59 +348,145 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._simItem.visible = targets.length > 0 || Boolean(this._switching);
         this._simItem.label.text = this._switching ? 'SIM-Wechsel läuft …' : 'SIM wechseln';
         this._simItem.sensitive = !this._switching;
+        this._fillSubmenu(this._simItem, '_simKey', targets,
+            card => `Zu ${simLabel(card)} wechseln`, card => this._confirmSimSwitch(card));
 
-        // Untermenü nur neu bauen, wenn sich die Ziele geändert haben
-        const key = targets.map(c => c.id).join(',');
-        if (key === this._simKey)
+        const cards = this._visibleSimCards();
+        const current = cards.find(c => c.primary);
+        this._defaultItem.visible = cards.length > 1;
+        this._defaultItem.label.text = `Standard-SIM: ${current ? simLabel(current) : '–'}`;
+        this._defaultItem.sensitive = !this._switching;
+        this._fillSubmenu(this._defaultItem, '_defaultKey', cards.filter(c => !c.primary),
+            card => `${simLabel(card)} als Standard festlegen`, card => this._confirmDefaultSim(card));
+    }
+
+    // Untermenü nur neu bauen, wenn sich die Einträge geändert haben
+    _fillSubmenu(item, keyProp, cards, label, action) {
+        const key = cards.map(c => c.id).join(',');
+        if (key === this[keyProp])
             return;
-        this._simKey = key;
-        this._simItem.menu.removeAll();
-        for (const card of targets) {
-            this._simItem.menu.addAction(`Zu ${simLabel(card)} wechseln`,
-                () => this._confirmSimSwitch(card));
-        }
+        this[keyProp] = key;
+        item.menu.removeAll();
+        for (const card of cards)
+            item.menu.addAction(label(card), () => action(card));
+    }
+
+    _confirm(title, description, okLabel, onOk) {
+        const dialog = new ModalDialog.ModalDialog({styleClass: 'teltonika-dialog'});
+        dialog.contentLayout.add_child(new Dialog.MessageDialogContent({title, description}));
+        dialog.addButton({label: 'Abbrechen', action: () => dialog.close(), key: Clutter.KEY_Escape});
+        dialog.addButton({
+            label: okLabel,
+            default: true,
+            action: () => {
+                dialog.close();
+                onOk();
+            },
+        });
+        dialog.open();
     }
 
     _confirmSimSwitch(card) {
         const m = this._modem;
         if (!m || this._switching)
             return;
-        const dialog = new ModalDialog.ModalDialog({styleClass: 'teltonika-dialog'});
-        dialog.contentLayout.add_child(new Dialog.MessageDialogContent({
-            title: `Zu ${simLabel(card)} wechseln?`,
-            description: `${simLabel(card)} wird Standard-SIM, danach baut der Router die ` +
-                'Mobilfunkverbindung neu auf. Sie ist dabei für einige Sekunden bis etwa ' +
-                'eine Minute unterbrochen.',
-        }));
-        dialog.addButton({label: 'Abbrechen', action: () => dialog.close(), key: Clutter.KEY_Escape});
-        dialog.addButton({
-            label: 'Wechseln',
-            default: true,
-            action: () => {
-                dialog.close();
-                this._switchSim(m, card);
-            },
-        });
-        dialog.open();
+        this._confirm(`Zu ${simLabel(card)} wechseln?`,
+            'Der Router schaltet zur nächsten SIM, notfalls mehrmals, bis ' +
+            `${simLabel(card)} aktiv ist. Die Mobilfunkverbindung ist dabei für einige ` +
+            'Sekunden bis wenige Minuten unterbrochen. Die Standard-SIM bleibt unverändert.',
+            'Wechseln', () => this._switchSim(m, card));
+    }
+
+    _confirmDefaultSim(card) {
+        this._confirm(`${simLabel(card)} als Standard-SIM festlegen?`,
+            'Die aktive Verbindung bleibt bestehen. Die Standard-SIM wird z. B. nach einem ' +
+            'Neustart des Routers oder einem Verbindungsneuaufbau verwendet.',
+            'Festlegen', () => this._setDefaultSim(card));
+    }
+
+    async _setDefaultSim(card) {
+        try {
+            await this._ensureClient().setDefaultSim(card.id, this._cancellable);
+        } catch (e) {
+            if (!this._cancellable.is_cancelled())
+                Main.notify('Teltonika Router', `Standard-SIM ändern fehlgeschlagen: ${e.message}${this._rightsHint(e)}`);
+            return;
+        }
+        for (const c of this._simCards)
+            c.primary = c.id === card.id;
+        this._updateSimItem();
+        Main.notify('Teltonika Router', `Standard-SIM ist jetzt ${simLabel(card)}`);
+    }
+
+    _rightsHint(e) {
+        return e.kind === 'forbidden'
+            ? '\nDer RutOS-Benutzer braucht Schreibrecht für die mobilen Einstellungen.' : '';
+    }
+
+    // Aktive SIM als Vergleichsschlüssel (Slot + eSIM-Profil)
+    _simKeyOf(m) {
+        return `${m.activeSim}/${m.esimProfile ?? ''}`;
     }
 
     async _switchSim(m, card) {
-        this._switching = {target: card, started: GLib.get_monotonic_time() / 1e6};
+        const maxHops = this._simCards.filter(c => !c.modem || c.modem === m.id).length || 2;
+        this._switching = {target: card, hops: 0, maxHops, lastKey: this._simKeyOf(m), hopStarted: now()};
         this._updateSimItem();
         this._setStatus(`Wechsle zu ${simLabel(card)} …`);
+        await this._hop(m);
+    }
+
+    // Ein Schritt: POST switch_sim (Router wechselt zur nächsten SIM)
+    async _hop(m) {
+        const s = this._switching;
+        s.hops++;
+        s.hopStarted = now();
         try {
-            await this._ensureClient().activateSim(m.id, card.id, this._cancellable);
+            await this._ensureClient().switchSim(m.id, this._cancellable);
         } catch (e) {
-            if (this._cancellable.is_cancelled())
-                return;
-            this._switching = null;
-            this._updateSimItem();
-            const hint = e.kind === 'forbidden'
-                ? '\nDer RutOS-Benutzer braucht Schreibrecht für die mobilen Einstellungen.' : '';
-            Main.notify('Teltonika Router', `SIM-Wechsel fehlgeschlagen: ${e.message}${hint}`);
+            if (!this._cancellable.is_cancelled())
+                this._finishSwitch(`SIM-Wechsel fehlgeschlagen: ${e.message}${this._rightsHint(e)}`);
             return;
         }
         this._reschedule(SIM_SWITCH_POLL_S);
+    }
+
+    // Bei jeder Abfrage während des Wechsels: fertig, weiterschalten oder abbrechen
+    _advanceSwitch(m) {
+        const s = this._switching;
+        const {target} = s;
+        if (isActiveSim(m, target)) {
+            if (m.netType)
+                this._finishSwitch(`${simLabel(target)} ist aktiv (${formatLabel(m)})`);
+            else if (now() - s.hopStarted > SIM_HOP_TIMEOUT_S)
+                this._finishSwitch(`${simLabel(target)} ist aktiv, aber noch ohne Netz`);
+            else
+                this._setStatus(`${simLabel(target)} aktiv, verbinde …`);
+            return;
+        }
+        const key = this._simKeyOf(m);
+        if (key !== s.lastKey) {
+            // Router ist auf einer anderen SIM gelandet (z. B. leerer Slot) → weiter
+            s.lastKey = key;
+            if (s.hops >= s.maxHops) {
+                this._finishSwitch(`${simLabel(target)} nicht erreicht – aktiv ist ${this._activeSimText(m)}`);
+                return;
+            }
+            this._setStatus(`Bei ${this._activeSimText(m)} gelandet, schalte weiter …`);
+            this._hop(m);
+            return;
+        }
+        if (now() - s.hopStarted > SIM_HOP_TIMEOUT_S) {
+            this._finishSwitch(`SIM-Wechsel nicht bestätigt – aktiv ist ${this._activeSimText(m)}`);
+            return;
+        }
+        this._setStatus(`Wechsle zu ${simLabel(target)} … (Schritt ${s.hops})`);
+    }
+
+    _finishSwitch(message) {
+        this._switching = null;
+        this._updateSimItem();
+        Main.notify('Teltonika Router', message);
     }
 
     destroy() {

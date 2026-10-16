@@ -34,25 +34,31 @@ dazu die Fixtures aus `kozaktomas/teltonika-exporter` und `karlbeecken/teltasync
 - Jedes Feld kann `"N/A"` sein. Ein Offline-Modem liefert nur `{id, name, offline, …}`.
 - Die oberen `rsrp`/`sinr` gehören zum LTE-Anker; die NR-Werte stehen in `cell_info[]`, Eintrag mit passender `nr-arfcn`.
 
-## SIM-Wechsel (gezielt, wie in der WebUI)
+## SIM-Wechsel und Standard-SIM
 
-Ermittelt aus dem WebUI-Code (`/assets/app.mobile.app-*.js`, Firmware RUTM_R_00.07.24.6):
+Die Erweiterung trennt beides (Wunsch des Nutzers: Standard-SIM soll beim Wechsel unverändert bleiben):
 
-1. **Set as default SIM**: `PUT /api/sim_cards/config/{section_name}` mit `{"data":{"primary":"1"}}`
-   (der Router setzt die anderen SIMs desselben Modems auf `primary = 0`)
-2. **Make active**: `POST /api/modems/{modem_id}/actions/restart_connection` (ohne Body).
-   Die Verbindung kommt mit der Standard-SIM zurück.
+- **Aktive SIM wechseln**: `POST /api/modems/{id}/actions/switch_sim` (ohne Body) schaltet zur *nächsten* SIM,
+  auch auf leere Slots. Die Erweiterung wiederholt den Aufruf, bis die Ziel-SIM aktiv ist
+  (höchstens so oft, wie es SIM-Einträge gibt; je Schritt 90 s Timeout).
+- **Standard-SIM festlegen**: `PUT /api/sim_cards/config/{section_name}` mit `{"data":{"primary":"1"}}`.
+  Am RUTM30 geprüft: löst **keine** Neuverbindung aus, die aktive SIM bleibt.
+
+So macht es die WebUI (aus `/assets/app.mobile.app-*.js`, Firmware RUTM_R_00.07.24.6):
+„Set as default SIM“ = PUT wie oben; „Make active“ ist nur für die Standard-SIM möglich und ruft
+`POST /api/modems/{id}/actions/restart_connection` – die Verbindung kommt mit der Standard-SIM zurück.
 
 - `GET /api/sim_cards/status` liefert pro Steckplatz bzw. eSIM-Profil `{modem, sim, esim_profile?, primary?, section_name}`.
   Ob ein Slot belegt ist, steht dort **nicht** → in der Erweiterung lassen sich Slots ausblenden.
-- Aktiv ist eine SIM, wenn `modems/status.active_sim == sim` ist und bei eSIM zusätzlich `esim_profile` übereinstimmt.
-- `POST /api/modems/{id}/actions/switch_sim` wechselt nur zur „nächsten“ SIM, auch auf leere Slots → nicht verwendet.
+- Aktiv ist eine SIM, wenn `modems/status.active_sim == sim` ist und bei eSIM zusätzlich `esim_profile` übereinstimmt
+  (`modems/status` meldet `esim_profile` nur, solange eine eSIM aktiv ist).
+- `GET /api/esim/config` liefert pro eSIM-Profil `provider` und `name`; physische SIMs haben nur den APN
+  (`/interfaces/config/mob1s{n}a1`).
 - RUTM30 (Testgerät): Slot 1 physisch, Slot 2 leer, Slot 3 eSIM (Profil 1).
 - Rechte: Schreibzugriff auf `/sim_cards/*` und `/modems/*`. Welche WebUI-Rechtegruppe das abdeckt,
   ist noch am Gerät mit `GET /api/users/acls/options` eines eigenen Benutzers zu prüfen
   (Kandidaten: `network/mobile/general`, `network/mobile/sim_switch`).
-- `POST /api/bulk` mit `{"data":[{"endpoint":"/api/…","method":"GET"},…]}` bündelt mehrere Abfragen
-  (nutzt die WebUI, die Erweiterung bisher nicht).
+- `POST /api/bulk` mit `{"data":[{"endpoint":"/api/…","method":"GET"},…]}` bündelt mehrere Abfragen.
 
 ## Weitere Endpunkte (für v1.0)
 

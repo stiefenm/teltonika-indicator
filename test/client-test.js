@@ -66,18 +66,25 @@ async function main() {
     const cards = await rw.getSimCards();
     check(cards.length === 3 && cards[2].esimProfile === '1', 'getSimCards', JSON.stringify(cards));
     const esim = cards.find(c => c.position === 3);
-    await rw.activateSim('2-1', esim.id);
+    // switch_sim: 1 → 2 (leer) → 3 (eSIM) → 1
+    const seq = [];
+    for (let i = 0; i < 3; i++) {
+        await rw.switchSim('2-1');
+        const m = (await rw.getModems())[0];
+        seq.push(`${m.activeSim}${m.netType ? '' : '!'}`);
+    }
+    check(seq.join(',') === '2!,3,1', 'switchSim cycles incl. empty slot', seq.join(','));
     let m = (await rw.getModems())[0];
-    check(m.activeSim === 3 && isActiveSim(m, esim), 'activateSim → SIM 3 (eSIM)', `${m.activeSim}/${m.esimProfile}`);
-    check((await rw.getSimCards()).find(c => c.primary)?.position === 3, 'eSIM is now default');
-    await rw.activateSim('2-1', cards.find(c => c.position === 1).id);
+    check(isActiveSim(m, cards[0]), 'back on SIM 1');
+    await rw.setDefaultSim(esim.id);
     m = (await rw.getModems())[0];
-    check(m.activeSim === 1, 'activateSim → back to SIM 1', String(m.activeSim));
+    check(m.activeSim === 1 && (await rw.getSimCards()).find(c => c.primary)?.position === 3,
+        'setDefaultSim keeps active SIM', `${m.activeSim}`);
     rw.destroy();
 
     const ro = new RouterClient({host: base, username: 'readonly', getPassword: async () => 'secret'});
     try {
-        await ro.activateSim('2-1', esim.id);
+        await ro.switchSim('2-1');
         check(false, 'read-only switch rejected');
     } catch (e) {
         check(e.kind === 'forbidden', 'read-only switch → forbidden', `${e.kind} ${e.message}`);
