@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "data": [
+    {"id": "1-1", "name": "Primary", "operator": "Vodafone.de", "conntype": "5G-NSA",
+     "band": "LTE_B1", "rssi": -60, "rsrp": -78, "rsrq": -9, "sinr": 20,
+     "temperature": 41, "ca_signal": [{"band": "5G N78"}]},
+    {"id": "2-1", "name": "Secondary", "simstate": "Not inserted"}
+  ]
+}

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.teltonika-indicator"
+          path="/org/gnome/shell/extensions/teltonika-indicator/">
+    <key name="host" type="s">
+      <default>''</default>
+      <summary>Router-Adresse</summary>
+      <description>z. B. 192.168.1.1 oder https://router.lan – ohne Schema wird HTTPS verwendet.</description>
+    </key>
+    <key name="username" type="s">
+      <default>'admin'</default>
+      <summary>RutOS-Benutzername</summary>
+    </key>
+    <key name="refresh-interval" type="i">
+      <range min="5" max="300"/>
+      <default>15</default>
+      <summary>Abfrageintervall in Sekunden</summary>
+    </key>
+    <key name="cert-fingerprint" type="s">
+      <default>''</default>
+      <summary>Gepinnter SHA-256-Fingerprint des Router-Zertifikats (TOFU)</summary>
+    </key>
+    <key name="allow-sim-switch" type="b">
+      <default>false</default>
+      <summary>SIM-Wechsel im Menü anbieten</summary>
+      <description>Benötigt einen RutOS-Benutzer mit Schreibrecht für Netzwerk → Mobilfunk.</description>
+    </key>
+    <key name="show-net-type" type="b">
+      <default>true</default>
+      <summary>Netztyp im Panel anzeigen</summary>
+    </key>
+    <key name="show-band" type="b">
+      <default>true</default>
+      <summary>Band im Panel anzeigen</summary>
+    </key>
+    <key name="show-signal" type="b">
+      <default>true</default>
+      <summary>Signalwert im Panel anzeigen</summary>
+    </key>
+    <key name="show-operator" type="b">
+      <default>false</default>
+      <summary>Betreiber im Panel anzeigen</summary>
+    </key>
+    <key name="signal-metric" type="s">
+      <choices>
+        <choice value="rsrp"/>
+        <choice value="rssi"/>
+        <choice value="rsrq"/>
+        <choice value="sinr"/>
+      </choices>
+      <default>'rsrp'</default>
+      <summary>Signalwert für das Panel-Label</summary>
+    </key>
+  </schema>
+</schemalist>

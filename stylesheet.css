@@ -1,0 +1,22 @@
+.teltonika-label {
+  padding-left: 4px;
+}
+
+.teltonika-q4 { color: #57e389; }
+.teltonika-q3 { color: #8ff0a4; }
+.teltonika-q2 { color: #f8e45c; }
+.teltonika-q1 { color: #ffa348; }
+.teltonika-q0 { color: #f66151; }
+
+.teltonika-status {
+  font-weight: bold;
+}
+
+.teltonika-row-title {
+  padding-right: 24px;
+}
+
+.teltonika-row-value {
+  font-weight: bold;
+  font-feature-settings: "tnum";
+}

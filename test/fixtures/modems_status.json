@@ -1,0 +1,18 @@
+{
+  "_comment": "Struktur aus kozaktomas/teltonika-exporter tests/modems_status.json (5G-NSA, Quectel), gekürzt; Feldnamen laut RutOS-API-Spec 7.25.3. Am RUTM30 noch zu verifizieren.",
+  "success": true,
+  "data": [
+    {"id": "2-1", "name": "Internal modem", "manufacturer": "Quectel", "model": "MODEL-EU",
+     "imei": "6666666666666666", "sim_count": 2, "active_sim": 1, "simstate": "Inserted", "pinstate": "Inserted",
+     "state": "Connected", "netstate": "Registered, home", "operator": "Telekom.de", "provider": "Telekom.de",
+     "conntype": "5G (NSA)", "ntype": "5G-NSA", "band": "LTE B3", "rssi": -56, "rsrp": -95, "rsrq": -10, "sinr": 9,
+     "signal_quality": 40, "temperature": 38, "txbytes": 1658175509, "rxbytes": 45844315341,
+     "cellid": "14887433684", "tac": "1832", "lac": "N/A",
+     "ca_signal": [
+       {"band": "LTE B3", "bandwidth": "20", "rsrp": -94, "rsrq": -17, "sinr": 10, "rssi": -54, "pcid": 442, "frequency": 1579, "primary": true},
+       {"band": "LTE B20", "bandwidth": "10", "rsrp": -77, "rsrq": -10, "sinr": 7, "rssi": -59, "pcid": 417, "frequency": 6200, "primary": false},
+       {"band": "5G N78", "bandwidth": "100", "frequency": 635232, "primary": false}
+     ]},
+    {"id": "3-1", "name": "External modem", "offline": true, "blocked": false, "disabled": false, "builtin": false, "sim_count": 1}
+  ]
+}
