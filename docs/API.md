@@ -34,14 +34,25 @@ dazu die Fixtures aus `kozaktomas/teltonika-exporter` und `karlbeecken/teltasync
 - Jedes Feld kann `"N/A"` sein. Ein Offline-Modem liefert nur `{id, name, offline, …}`.
 - Die oberen `rsrp`/`sinr` gehören zum LTE-Anker; die NR-Werte stehen in `cell_info[]`, Eintrag mit passender `nr-arfcn`.
 
-## SIM-Wechsel
+## SIM-Wechsel (gezielt, wie in der WebUI)
 
-- `POST /api/modems/{id}/actions/switch_sim` (ohne Body) wechselt zur nächsten SIM und antwortet mit `{"success":true}`.
-- Rechte: RutOS-ACLs sind pfadbasiert (`read[]`/`write[]` pro Gruppe, z. B. `admin/network/*`).
-  Der Benutzer braucht Lesezugriff plus Schreibzugriff auf Netzwerk → Mobilfunk. Damit könnte er
-  aber auch APN und andere Mobilfunk-Einstellungen ändern.
-- Eigene Rechte abfragen: `GET /api/users/acls/options`. Die genauen ACL-Namen am RUTM30 noch prüfen.
-- Status und Log: `GET /api/sim_switch/status`, `GET /api/sim_switch/log/{modem_id}`
+Ermittelt aus dem WebUI-Code (`/assets/app.mobile.app-*.js`, Firmware RUTM_R_00.07.24.6):
+
+1. **Set as default SIM**: `PUT /api/sim_cards/config/{section_name}` mit `{"data":{"primary":"1"}}`
+   (der Router setzt die anderen SIMs desselben Modems auf `primary = 0`)
+2. **Make active**: `POST /api/modems/{modem_id}/actions/restart_connection` (ohne Body).
+   Die Verbindung kommt mit der Standard-SIM zurück.
+
+- `GET /api/sim_cards/status` liefert pro Steckplatz bzw. eSIM-Profil `{modem, sim, esim_profile?, primary?, section_name}`.
+  Ob ein Slot belegt ist, steht dort **nicht** → in der Erweiterung lassen sich Slots ausblenden.
+- Aktiv ist eine SIM, wenn `modems/status.active_sim == sim` ist und bei eSIM zusätzlich `esim_profile` übereinstimmt.
+- `POST /api/modems/{id}/actions/switch_sim` wechselt nur zur „nächsten“ SIM, auch auf leere Slots → nicht verwendet.
+- RUTM30 (Testgerät): Slot 1 physisch, Slot 2 leer, Slot 3 eSIM (Profil 1).
+- Rechte: Schreibzugriff auf `/sim_cards/*` und `/modems/*`. Welche WebUI-Rechtegruppe das abdeckt,
+  ist noch am Gerät mit `GET /api/users/acls/options` eines eigenen Benutzers zu prüfen
+  (Kandidaten: `network/mobile/general`, `network/mobile/sim_switch`).
+- `POST /api/bulk` mit `{"data":[{"endpoint":"/api/…","method":"GET"},…]}` bündelt mehrere Abfragen
+  (nutzt die WebUI, die Erweiterung bisher nicht).
 
 ## Weitere Endpunkte (für v1.0)
 

@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "data": {
+    "localtime": 1792146004,
+    "uptime_seconds": 7444,
+    "load": {
+      "min15": 0.015625238422217136,
+      "min5": 0.044922560463874266,
+      "min1": 0.01513694972152285
+    },
+    "uptime": "02h 04m 04s",
+    "memory": {
+      "flash_total": 82.42,
+      "flash_used": 1.07,
+      "ram_percentage": 53.9,
+      "ram_shared": 0.69,
+      "ram_buffered": 0.05,
+      "ram_used": 121.85,
+      "ram_free": 104.2,
+      "ram_total": 226.06,
+      "flash_percentage": 1.3,
+      "flash_free": 81.35
+    },
+    "loadavg": 0.00628930817610063
+  }
+}

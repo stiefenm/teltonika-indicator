@@ -42,6 +42,17 @@ eq(P.formatLabel(m, {metric: 'sinr', showBand: false}), '5G 9 dB', 'label sinr')
 eq(P.formatBytes(m.rxBytes), '42.7 GB', 'bytes');
 eq(P.netTypeOf('4G (LTE); VoLTE'), '4G', 'netType 4G (LTE); VoLTE');
 
+// Echte RUTM30-Antworten (Firmware RUTM_R_00.07.24.6)
+const r = P.primaryModem(P.parseModems(load('rutm30_modems_status.json')));
+eq(P.formatLabel(r), '5G B20+B7+n78 \u221292 dBm', 'RUTM30 label');
+eq([r.operator, r.activeSim, r.simCount, r.temperature], ['MEDIONmobile', 1, 3, 41], 'RUTM30 fields');
+const cards = P.parseSimCards(load('rutm30_sim_cards_status.json'));
+eq(cards.map(c => [c.position, c.esimProfile, c.primary]), [[1, null, false], [2, null, false], [3, '1', true]], 'RUTM30 sim cards');
+eq(cards.map(P.simLabel), ['SIM 1', 'SIM 2', 'SIM 3 (eSIM 1)'], 'sim labels');
+eq(cards.map(c => P.isActiveSim(r, c)), [true, false, false], 'active SIM 1');
+eq(P.isActiveSim({activeSim: 3, esimProfile: '1'}, cards[2]), true, 'active eSIM profile 1');
+eq(P.isActiveSim({activeSim: 3, esimProfile: '2'}, cards[2]), false, 'other eSIM profile');
+
 const ms = P.parseModems(load('modems_status_5g_nsa.json'));
 eq(ms.length, 2, 'two modems');
 const p = P.primaryModem(ms);

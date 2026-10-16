@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Mock-RutOS-Router für Tests: python3 test/mock_router.py PORT [CERT KEY]
 
-Endpunkte: POST /api/login, GET /api/modems/status, POST /api/modems/{id}/actions/switch_sim,
+Endpunkte: POST /api/login, GET /api/modems/status, GET /api/sim_cards/status,
+PUT /api/sim_cards/config/{id}, POST /api/modems/{id}/actions/restart_connection,
 POST /_test/expire (alle Tokens ungültig), POST /_test/fixture?name=…
 """
 import json, secrets, ssl, sys
@@ -13,7 +14,8 @@ FIX = Path(__file__).parent / "fixtures"
 # Benutzer → darf schreiben (SIM-Wechsel)?
 USERS = {"monitor": ("secret", True), "readonly": ("secret", False)}
 tokens = {}  # token → Benutzer
-state = {"fixture": "modems_status.json", "active_sim": {}}
+state = {"fixture": "modems_status.json", "active": {}}  # modem → (slot, esim_profile)
+sim_cards = json.loads((FIX / "rutm30_sim_cards_status.json").read_text())["data"]
 
 
 class H(BaseHTTPRequestHandler):
@@ -43,14 +45,13 @@ class H(BaseHTTPRequestHandler):
                 return self.reply(200, {"success": True, "data": {"username": user, "token": t, "expires": 299}})
             return self.reply(401, {"success": False, "errors": [{"code": 121, "error": "Authentication failed", "source": "Login"}]})
         parts = u.path.strip("/").split("/")
-        if parts[:2] == ["api", "modems"] and parts[3:] == ["actions", "switch_sim"]:
-            user = self.user()
-            if not user:
-                return self.reply(401, {"success": False, "errors": [{"code": 120, "error": "Unauthorized access"}]})
-            if not USERS[user][1]:
-                return self.reply(403, {"success": False, "errors": [{"code": 122, "error": "Forbidden", "source": "ACL"}]})
-            cur = state["active_sim"].get(parts[2], 1)
-            state["active_sim"][parts[2]] = 2 if cur == 1 else 1
+        if parts[:2] == ["api", "modems"] and parts[3:] == ["actions", "restart_connection"]:
+            if not self.can_write():
+                return
+            # Verbindung kommt mit der Standard-SIM zurück
+            card = next((c for c in sim_cards if c["modem"] == parts[2] and c.get("primary") == "1"), None)
+            if card:
+                state["active"][parts[2]] = (int(card["sim"]), card.get("esim_profile"))
             return self.reply(200, {"success": True})
         if u.path == "/_test/expire":
             tokens.clear()
@@ -58,6 +59,34 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/_test/fixture":
             state["fixture"] = parse_qs(u.query)["name"][0]
             return self.reply(200, {"success": True})
+        self.reply(404, {"success": False})
+
+    def can_write(self):
+        user = self.user()
+        if not user:
+            self.reply(401, {"success": False, "errors": [{"code": 120, "error": "Unauthorized access"}]})
+            return False
+        if not USERS[user][1]:
+            self.reply(403, {"success": False, "errors": [{"code": 122, "error": "Forbidden", "source": "ACL"}]})
+            return False
+        return True
+
+    def do_PUT(self):
+        u = urlparse(self.path)
+        data = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+        parts = u.path.strip("/").split("/")
+        if parts[:3] == ["api", "sim_cards", "config"] and len(parts) == 4:
+            if not self.can_write():
+                return
+            card = next((c for c in sim_cards if c["section_name"] == parts[3]), None)
+            if not card:
+                return self.reply(404, {"success": False, "errors": [{"code": 404, "error": "Not found"}]})
+            if data.get("data", {}).get("primary") == "1":
+                for c in sim_cards:
+                    if c["modem"] == card["modem"]:
+                        c.pop("primary", None)
+                card["primary"] = "1"
+            return self.reply(200, {"success": True, "data": card})
         self.reply(404, {"success": False})
 
     def user(self):
@@ -70,9 +99,15 @@ class H(BaseHTTPRequestHandler):
         if self.path == "/api/modems/status":
             data = json.loads((FIX / state["fixture"]).read_text())
             for m in data.get("data", []):
-                if m.get("id") in state["active_sim"]:
-                    m["active_sim"] = state["active_sim"][m["id"]]
+                if m.get("id") in state["active"]:
+                    m["active_sim"], profile = state["active"][m["id"]]
+                    if profile:
+                        m["esim_profile"] = profile
+                    else:
+                        m.pop("esim_profile", None)
             return self.reply(200, data)
+        if self.path == "/api/sim_cards/status":
+            return self.reply(200, {"success": True, "data": sim_cards})
         self.reply(404, {"success": False})
 
 

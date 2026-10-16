@@ -1,5 +1,6 @@
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
@@ -68,10 +69,25 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
 
         const sim = new Adw.SwitchRow({
             title: 'SIM-Wechsel im Menü anbieten',
-            subtitle: 'Benutzer braucht Schreibrecht für Netzwerk → Mobilfunk',
+            subtitle: 'Benutzer braucht Schreibrecht für die mobilen Einstellungen',
         });
         settings.bind('allow-sim-switch', sim, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(sim);
+
+        const hidden = new Adw.EntryRow({
+            title: 'Ausgeblendete SIM-Slots (z. B. leere: 2)',
+            show_apply_button: true,
+        });
+        const slotsText = () => settings.get_value('hidden-sim-slots').deepUnpack().join(', ');
+        hidden.text = slotsText();
+        hidden.connect('apply', () => {
+            const slots = [...new Set(hidden.text.split(/[\s,;]+/).map(Number)
+                .filter(n => Number.isInteger(n) && n > 0))];
+            settings.set_value('hidden-sim-slots', new GLib.Variant('ai', slots));
+            hidden.text = slotsText();
+        });
+        settings.bind('allow-sim-switch', hidden, 'sensitive', Gio.SettingsBindFlags.GET);
+        group.add(hidden);
 
         const test = new Adw.ActionRow({title: 'Verbindung testen', subtitle: 'Übernimmt zuerst offene Eingaben'});
         const btn = new Gtk.Button({label: 'Testen', valign: Gtk.Align.CENTER});

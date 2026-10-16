@@ -20,7 +20,7 @@ gnome-extensions prefs teltonika-indicator@mstiefenhofer
 In den Einstellungen Router-Adresse, Benutzer und Passwort eintragen und „Testen“ klicken.
 Das Passwort liegt im GNOME-Schlüsselbund. Empfohlen ist ein eigener RutOS-Benutzer mit Leserechten.
 Für den optionalen SIM-Wechsel im Menü (Einstellung „SIM-Wechsel im Menü anbieten“)
-braucht er zusätzlich Schreibrecht für Netzwerk → Mobilfunk.
+braucht er zusätzlich Schreibrecht für die mobilen Einstellungen.
 
 ## Funktionsweise
 
@@ -30,8 +30,9 @@ braucht er zusätzlich Schreibrecht für Netzwerk → Mobilfunk.
   Ändert er sich, wird die Verbindung blockiert, bis er in den Einstellungen gelöscht wird.
 - Ist der Router nicht erreichbar, wird das Abfrageintervall still verlängert (exponentieller Backoff bis 5 min).
 - Bei mehreren Modems wird das erste mit Signal angezeigt.
-- SIM-Wechsel: `POST /api/modems/{id}/actions/switch_sim` nach Bestätigung im Dialog, danach Abfrage
-  alle 5 s, bis die neue SIM gemeldet wird. Das Ergebnis kommt als Benachrichtigung.
+- SIM-Wechsel (Untermenü, nach Bestätigung): Ziel-SIM wird Standard-SIM, danach baut der Router die Verbindung neu auf
+  (wie „Make active“ in der WebUI). Die Erweiterung fragt dann alle 5 s ab, bis die neue SIM gemeldet wird.
+  Leere Slots lassen sich in den Einstellungen ausblenden, weil die API nicht meldet, ob ein Slot belegt ist.
 
 ## Entwicklung
 

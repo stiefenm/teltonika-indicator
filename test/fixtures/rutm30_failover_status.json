@@ -1,0 +1,61 @@
+{
+  "success": true,
+  "data": {
+    "wan": {
+      "uptime": 0,
+      "online": 0,
+      "age": 0,
+      "score": 0,
+      "lost": 0,
+      "turn": 0,
+      "offline": 0,
+      "up": false,
+      "status": "notracking",
+      "running": false,
+      "enabled": false,
+      "track_ip": []
+    },
+    "mob1s3a1e2": {
+      "uptime": 0,
+      "online": 0,
+      "age": 0,
+      "score": 0,
+      "lost": 0,
+      "turn": 0,
+      "offline": 0,
+      "up": false,
+      "status": "notracking",
+      "running": false,
+      "enabled": false,
+      "track_ip": []
+    },
+    "mob1s1a1": {
+      "uptime": 0,
+      "online": 0,
+      "age": 0,
+      "score": 0,
+      "lost": 0,
+      "turn": 0,
+      "offline": 0,
+      "up": false,
+      "status": "notracking",
+      "running": false,
+      "enabled": false,
+      "track_ip": []
+    },
+    "mob1s2a1": {
+      "uptime": 0,
+      "online": 0,
+      "age": 0,
+      "score": 0,
+      "lost": 0,
+      "turn": 0,
+      "offline": 0,
+      "up": false,
+      "status": "notracking",
+      "running": false,
+      "enabled": false,
+      "track_ip": []
+    }
+  }
+}

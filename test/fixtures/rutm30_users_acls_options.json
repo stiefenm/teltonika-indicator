@@ -1,0 +1,1487 @@
+{
+  "success": true,
+  "data": {
+    "exceptions": {
+      "/phone_settings/config/*": [
+        "enabled"
+      ],
+      "/bluetooth/config/general/*": [
+        "enabled"
+      ],
+      "/lldp/config/*": [
+        "enabled"
+      ],
+      "/access_control/pam/config/*": [
+        "service"
+      ],
+      "/sip/gateway/global/*": [
+        "enabled"
+      ],
+      "/iec60870/client/instances/config/*": [
+        "id",
+        "name"
+      ]
+    },
+    "uci": {
+      "*": [
+        "read",
+        "write"
+      ]
+    },
+    "hide_sensitive": "0",
+    "api": {
+      "/gps/*": [
+        "read",
+        "write"
+      ],
+      "/gre/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/options/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/registered_users/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/sms_users/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/users/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/groups/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/user_management/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/logs/*": [
+        "read"
+      ],
+      "/hotspot2/*": [
+        "read",
+        "write"
+      ],
+      "/impulse_counter/*": [
+        "read",
+        "write"
+      ],
+      "/integrity/*": [
+        "read",
+        "write"
+      ],
+      "/internet_connection/*": [
+        "read",
+        "write"
+      ],
+      "/io/*": [
+        "read",
+        "write"
+      ],
+      "/ipsec/*": [
+        "read",
+        "write"
+      ],
+      "/l2tp/*": [
+        "read",
+        "write"
+      ],
+      "/l2tpv3/*": [
+        "read",
+        "write"
+      ],
+      "/firewall/limits/*": [
+        "read",
+        "write"
+      ],
+      "/events_log/config/*": [
+        "read"
+      ],
+      "/sim_switch/*": [
+        "read",
+        "write"
+      ],
+      "/apn_database/config/*": [
+        "read"
+      ],
+      "/operator_lists/*": [
+        "read",
+        "write"
+      ],
+      "/data_limit/*": [
+        "read",
+        "write"
+      ],
+      "/sim_cards/*": [
+        "read",
+        "write"
+      ],
+      "/data_usage/*": [
+        "read"
+      ],
+      "/sms_utilities/*": [
+        "read",
+        "write"
+      ],
+      "/sms_gateway/auto_reply/*": [
+        "read",
+        "write"
+      ],
+      "/sms_gateway/sms_forwarding/*": [
+        "read",
+        "write"
+      ],
+      "/messages/actions/remove_messages*": [
+        "write"
+      ],
+      "/messages/modem/*": [
+        "read"
+      ],
+      "/messages/status/*": [
+        "read"
+      ],
+      "/messages/actions/send/*": [
+        "read",
+        "write"
+      ],
+      "/messages/storage/*": [
+        "read",
+        "write"
+      ],
+      "/universal_gateway/status/*": [
+        "read"
+      ],
+      "/modbus/client/*": [
+        "read",
+        "write"
+      ],
+      "/modbus/server/serial/*": [
+        "read",
+        "write"
+      ],
+      "/modbus/server/tcp/*": [
+        "read",
+        "write"
+      ],
+      "/access_control/pam/config/*": [
+        "read"
+      ],
+      "/sip/gateway/global/*": [
+        "read"
+      ],
+      "/iec60870/client/instances/config/*": [
+        "read"
+      ],
+      "/phone_settings/config/*": [
+        "read"
+      ],
+      "/modem_control/*": [
+        "read",
+        "write"
+      ],
+      "/mqtt/publisher/*": [
+        "read",
+        "write"
+      ],
+      "/mqtt/bridge/*": [
+        "read",
+        "write"
+      ],
+      "/mqtt/broker/*": [
+        "read",
+        "write"
+      ],
+      "/users/acls/*": [
+        "read",
+        "write"
+      ],
+      "/users/config/*": [
+        "read",
+        "write"
+      ],
+      "/users/groups/*": [
+        "read",
+        "write"
+      ],
+      "/failover/*": [
+        "read",
+        "write"
+      ],
+      "/interfaces/*": [
+        "read",
+        "write"
+      ],
+      "/network_usage/*": [
+        "read",
+        "write"
+      ],
+      "/topology/*": [
+        "read",
+        "write"
+      ],
+      "/date_time/ntp/*": [
+        "read",
+        "write"
+      ],
+      "/openvpn/*": [
+        "read",
+        "write"
+      ],
+      "/overip/*": [
+        "read",
+        "write"
+      ],
+      "/overview/*": [
+        "read",
+        "write"
+      ],
+      "/system/actions/network_restart/*": [
+        "write"
+      ],
+      "/package_manager/*": [
+        "read",
+        "write"
+      ],
+      "/password_policy/config/*": [
+        "read",
+        "write"
+      ],
+      "/recipients/phone_groups/*": [
+        "read",
+        "write"
+      ],
+      "/port_mirroring/*": [
+        "read",
+        "write"
+      ],
+      "/dot1x/radius/*": [
+        "read",
+        "write"
+      ],
+      "/dot1x/client/*": [
+        "read",
+        "write"
+      ],
+      "/dot1x/ports/*": [
+        "read",
+        "write"
+      ],
+      "/ports_settings/*": [
+        "read",
+        "write"
+      ],
+      "/pptp/*": [
+        "read",
+        "write"
+      ],
+      "/profiles/*": [
+        "read",
+        "write"
+      ],
+      "/firewall/connections/status/*": [
+        "read"
+      ],
+      "/relayd/*": [
+        "read",
+        "write"
+      ],
+      "/routing_tables/*": [
+        "read",
+        "write"
+      ],
+      "/ip_rules/ipv4/*": [
+        "read",
+        "write"
+      ],
+      "/ip_routes/*": [
+        "read",
+        "write"
+      ],
+      "/ip_neighbors/*": [
+        "read"
+      ],
+      "/routes/status/*": [
+        "read"
+      ],
+      "/bgp/*": [
+        "read",
+        "write"
+      ],
+      "/vpn_utils/*": [
+        "read"
+      ],
+      "/eigrp/*": [
+        "read",
+        "write"
+      ],
+      "/nhrp/*": [
+        "read",
+        "write"
+      ],
+      "/ospf/*": [
+        "read",
+        "write"
+      ],
+      "/rip/*": [
+        "read",
+        "write"
+      ],
+      "/dfota/config/*": [
+        "read",
+        "write"
+      ],
+      "/fota/*": [
+        "read",
+        "write"
+      ],
+      "/serial/*": [
+        "read"
+      ],
+      "/services/*": [
+        "read",
+        "write"
+      ],
+      "/system/languages/options/*": [
+        "read"
+      ],
+      "/esim/*": [
+        "read",
+        "write"
+      ],
+      "/rms/*": [
+        "read",
+        "write"
+      ],
+      "/site_manager/*": [
+        "read",
+        "write"
+      ],
+      "/snmp/agent/*": [
+        "write"
+      ],
+      "/snmp/system/*": [
+        "read",
+        "write"
+      ],
+      "/snmp/agent/config/*": [
+        "read"
+      ],
+      "/snmp/agent/objects/*": [
+        "read"
+      ],
+      "/universal_gateway/options/*": [
+        "read"
+      ],
+      "/snmp/users/*": [
+        "read",
+        "write"
+      ],
+      "/snmp/communities_v6/*": [
+        "read",
+        "write"
+      ],
+      "/snmp/communities/*": [
+        "read",
+        "write"
+      ],
+      "/snmp/trap/*": [
+        "read",
+        "write"
+      ],
+      "/speedtest/*": [
+        "read",
+        "write"
+      ],
+      "/sqm/*": [
+        "read",
+        "write"
+      ],
+      "/sso/*": [
+        "read",
+        "write"
+      ],
+      "/sstp/*": [
+        "read",
+        "write"
+      ],
+      "/stunnel/*": [
+        "read",
+        "write"
+      ],
+      "/system/device/load/*": [
+        "write"
+      ],
+      "/system/device/usage/*": [
+        "write"
+      ],
+      "/system/device/status/*": [
+        "write"
+      ],
+      "/logging/*": [
+        "read",
+        "write"
+      ],
+      "/troubleshoot/*": [
+        "read",
+        "write"
+      ],
+      "/diagnostics/actions/*": [
+        "write"
+      ],
+      "/modems/*": [
+        "write",
+        "read"
+      ],
+      "/system/config/*": [
+        "read",
+        "write"
+      ],
+      "/ui/*": [
+        "read",
+        "write"
+      ],
+      "/ulog/*": [
+        "read",
+        "write"
+      ],
+      "/system/actions/reboot/*": [
+        "write",
+        "read"
+      ],
+      "/usb_tools/*": [
+        "read",
+        "write"
+      ],
+      "/uscripts/*": [
+        "read",
+        "write"
+      ],
+      "/interface_based_vlan/*": [
+        "read",
+        "write"
+      ],
+      "/port_based_vlan/*": [
+        "read",
+        "write"
+      ],
+      "/vrf/*": [
+        "read",
+        "write"
+      ],
+      "/vrrp/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/status/*": [
+        "read",
+        "write"
+      ],
+      "/webfilter/config/*": [
+        "read",
+        "write"
+      ],
+      "/webfilter/global/*": [
+        "read",
+        "write"
+      ],
+      "/webfilter/privoxy/*": [
+        "read",
+        "write"
+      ],
+      "/widget/*": [
+        "read",
+        "write"
+      ],
+      "/wifi_scanner/*": [
+        "read",
+        "write"
+      ],
+      "/wireguard/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/config/*": [
+        "read",
+        "write"
+      ],
+      "/wireless/*": [
+        "write",
+        "read"
+      ],
+      "/wol/*": [
+        "read",
+        "write"
+      ],
+      "/modbus/serial_gateway/*": [
+        "read",
+        "write"
+      ],
+      "/modbus/gateway/*": [
+        "read",
+        "write"
+      ],
+      "/modbus/tcp_over_serial/*": [
+        "read",
+        "write"
+      ],
+      "/firewall/zones/*": [
+        "read",
+        "write"
+      ],
+      "/lldp/config/*": [
+        "read"
+      ],
+      "/bluetooth/config/general/*": [
+        "read"
+      ],
+      "/2fa/*": [
+        "read",
+        "write"
+      ],
+      "/access_control/telnet/*": [
+        "read",
+        "write"
+      ],
+      "/access_control/webui/*": [
+        "read",
+        "write"
+      ],
+      "/access_control/cli/*": [
+        "read",
+        "write"
+      ],
+      "/access_control/ssh/*": [
+        "read",
+        "write"
+      ],
+      "/access_control/security/*": [
+        "read",
+        "write"
+      ],
+      "/access_control/sessions/*": [
+        "read",
+        "write"
+      ],
+      "/system/banner/config/*": [
+        "read",
+        "write"
+      ],
+      "/system/buttons/config/*": [
+        "read",
+        "write"
+      ],
+      "/system/led/config/*": [
+        "read",
+        "write"
+      ],
+      "/auto_reboot/ping_wget/*": [
+        "read",
+        "write"
+      ],
+      "/auto_reboot/scheduler/*": [
+        "read",
+        "write"
+      ],
+      "/backup/*": [
+        "read",
+        "write"
+      ],
+      "/call_utilities/*": [
+        "read",
+        "write"
+      ],
+      "/certificates/*": [
+        "read",
+        "write"
+      ],
+      "/console/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/images/*": [
+        "read",
+        "write"
+      ],
+      "/hotspot/themes/*": [
+        "read",
+        "write"
+      ],
+      "/unauthorized/status/*": [
+        "read"
+      ],
+      "/logout*": [
+        "write"
+      ],
+      "/session/*": [
+        "read"
+      ],
+      "/system/actions/change_password_firstlogin/*": [
+        "read",
+        "write"
+      ],
+      "/system/device/*": [
+        "read"
+      ],
+      "/azure/iot_hub/*": [
+        "read"
+      ],
+      "/data_to_server/*": [
+        "read",
+        "write"
+      ],
+      "/ddns/*": [
+        "read",
+        "write"
+      ],
+      "/basic/network/devices/*": [
+        "read"
+      ],
+      "/network/devices/*": [
+        "read",
+        "write"
+      ],
+      "/dhcp/relays/*": [
+        "read",
+        "write"
+      ],
+      "/dhcp/servers/*": [
+        "read",
+        "write"
+      ],
+      "/dhcp/static_leases/*": [
+        "read",
+        "write"
+      ],
+      "/dhcp/leases/*": [
+        "read"
+      ],
+      "/dmvpn/*": [
+        "read",
+        "write"
+      ],
+      "/dns/*": [
+        "write",
+        "read"
+      ],
+      "/recipients/email_users/*": [
+        "read",
+        "write"
+      ],
+      "/sms_gateway/email_to_sms/*": [
+        "read",
+        "write"
+      ],
+      "/events_reporting/*": [
+        "read",
+        "write"
+      ],
+      "/event_juggler/*": [
+        "read",
+        "write"
+      ],
+      "/nat_offloading/*": [
+        "write"
+      ],
+      "/nat_offloading/global*": [
+        "read"
+      ],
+      "/firewall/global/*": [
+        "read",
+        "write"
+      ],
+      "/firewall/port_forwards/*": [
+        "read",
+        "write"
+      ],
+      "/firewall/traffic_rules/*": [
+        "read",
+        "write"
+      ],
+      "/firewall/nat_rules/*": [
+        "read",
+        "write"
+      ],
+      "/attack_prevention/*": [
+        "read",
+        "write"
+      ],
+      "/firewall/custom_rules/*": [
+        "read",
+        "write"
+      ],
+      "/dmz/*": [
+        "read",
+        "write"
+      ],
+      "/firewall/iptables/*": [
+        "read",
+        "write"
+      ],
+      "/firmware/*": [
+        "read",
+        "write"
+      ]
+    },
+    "access-group": {
+      "services/vpn/ipsec": [
+        "read",
+        "write"
+      ],
+      "services/vpn/l2tp_classic": [
+        "read",
+        "write"
+      ],
+      "services/vpn/l2tpv3": [
+        "read",
+        "write"
+      ],
+      "network/firewall/limits": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/eventlog/all": [
+        "read",
+        "write"
+      ],
+      "system/admin/memory_expansion/usb": [
+        "read",
+        "write"
+      ],
+      "network/mobile/general": [
+        "read",
+        "write"
+      ],
+      "network/mobile/connection": [
+        "read",
+        "write"
+      ],
+      "network/mobile/sim_switch": [
+        "read",
+        "write"
+      ],
+      "network/mobile/operators/scan": [
+        "read",
+        "write"
+      ],
+      "network/mobile/operators/list": [
+        "read",
+        "write"
+      ],
+      "network/mobile/utilities": [
+        "read",
+        "write"
+      ],
+      "network/mobile/limits/data": [
+        "read",
+        "write"
+      ],
+      "network/mobile/limits/sms": [
+        "read",
+        "write"
+      ],
+      "network/mobile/esim_profiles": [
+        "read",
+        "write"
+      ],
+      "status/realtime/mobile_usage": [
+        "read",
+        "write"
+      ],
+      "services/mobile_utilities/sms_utilities": [
+        "read",
+        "write"
+      ],
+      "services/mobile_utilities/sms_gateway/auto_reply": [
+        "read",
+        "write"
+      ],
+      "services/mobile_utilities/sms_gateway/sms_forwarding": [
+        "read",
+        "write"
+      ],
+      "services/mobile_utilities/sms_messages/read": [
+        "read",
+        "write"
+      ],
+      "services/mobile_utilities/sms_messages/send": [
+        "read",
+        "write"
+      ],
+      "services/mobile_utilities/sms_messages/storage": [
+        "read",
+        "write"
+      ],
+      "services/modbus/modbus_client": [
+        "read",
+        "write"
+      ],
+      "services/modbus/modbus_serial_client": [
+        "read",
+        "write"
+      ],
+      "services/modbus/modbus_serial_server/general": [
+        "read",
+        "write"
+      ],
+      "services/modbus/modbus_serial_server/data_source": [
+        "read",
+        "write"
+      ],
+      "services/modbus/modbus_server/general": [
+        "read",
+        "write"
+      ],
+      "services/modbus/modbus_server/data_source": [
+        "read",
+        "write"
+      ],
+      "services/modbus/modbus_gateway": [
+        "read",
+        "write"
+      ],
+      "services/modbus/tcp_over_serial": [
+        "read",
+        "write"
+      ],
+      "services/serial_utilities/modem_control": [
+        "read",
+        "write"
+      ],
+      "services/mqtt/publisher": [
+        "read",
+        "write"
+      ],
+      "services/mqtt/broker": [
+        "read",
+        "write"
+      ],
+      "system/admin/multiusers/change_password": [
+        "read",
+        "write"
+      ],
+      "system/admin/multiusers/users_configuration": [
+        "read",
+        "write"
+      ],
+      "network/failover/mwan": [
+        "read",
+        "write"
+      ],
+      "network/failover/mwanInterface": [
+        "read",
+        "write"
+      ],
+      "network/lan": [
+        "read",
+        "write"
+      ],
+      "network/wan": [
+        "read",
+        "write"
+      ],
+      "status/network/mobile": [
+        "read",
+        "write"
+      ],
+      "status/wireless/interfaces": [
+        "read",
+        "write"
+      ],
+      "status/network/network_usage": [
+        "read",
+        "write"
+      ],
+      "status/network/topology": [
+        "read",
+        "write"
+      ],
+      "system/admin/datetime/general": [
+        "read",
+        "write"
+      ],
+      "system/admin/datetime/ntp_general": [
+        "read",
+        "write"
+      ],
+      "services/vpn/openvpn": [
+        "read",
+        "write"
+      ],
+      "services/serial_utilities/overip": [
+        "read",
+        "write"
+      ],
+      "system/package_manager": [
+        "read",
+        "write"
+      ],
+      "system/admin/multiusers/password_policy": [
+        "read",
+        "write"
+      ],
+      "system/admin/group/phone": [
+        "read",
+        "write"
+      ],
+      "network/ports/port_mirroring": [
+        "read",
+        "write"
+      ],
+      "network/ports/port_security/radius": [
+        "read",
+        "write"
+      ],
+      "network/ports/port_security/general": [
+        "read",
+        "write"
+      ],
+      "network/ports/ports_settings": [
+        "read",
+        "write"
+      ],
+      "services/vpn/pptp": [
+        "read",
+        "write"
+      ],
+      "system/admin/profiles/config": [
+        "read",
+        "write"
+      ],
+      "system/admin/profiles/scheduler": [
+        "read",
+        "write"
+      ],
+      "status/realtime/load": [
+        "read",
+        "write"
+      ],
+      "status/realtime/bandwidth": [
+        "read",
+        "write"
+      ],
+      "status/realtime/wireless": [
+        "read",
+        "write"
+      ],
+      "status/realtime/mobile_signal": [
+        "read",
+        "write"
+      ],
+      "status/realtime/connections": [
+        "read",
+        "write"
+      ],
+      "network/wireless/relayd": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/reset": [
+        "read",
+        "write"
+      ],
+      "network/routes/static_routes": [
+        "read",
+        "write"
+      ],
+      "network/routes/advanced_routing": [
+        "read",
+        "write"
+      ],
+      "status/routes/general": [
+        "read",
+        "write"
+      ],
+      "network/routes/dynamic_routes/proto_bgp": [
+        "read",
+        "write"
+      ],
+      "status/routes/dynamic/bgp": [
+        "read",
+        "write"
+      ],
+      "system/admin/multiusers/2fa": [
+        "read",
+        "write"
+      ],
+      "system/admin/access_control/general": [
+        "read",
+        "write"
+      ],
+      "system/admin/access_control/safety": [
+        "read",
+        "write"
+      ],
+      "system/admin/access_control/sessions": [
+        "read",
+        "write"
+      ],
+      "system/admin/admin": [
+        "read",
+        "write"
+      ],
+      "system/reboot": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/auto_reboot/ping_reboot": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/auto_reboot/reboot_scheduler": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/backup": [
+        "read",
+        "write"
+      ],
+      "services/mobile_utilities/call_utilities/call_utility": [
+        "read",
+        "write"
+      ],
+      "system/admin/certificates/manager": [
+        "read",
+        "write"
+      ],
+      "status/wireless/channel_analysis": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/cli": [
+        "read",
+        "write"
+      ],
+      "services/cloud_solutions/rms": [
+        "read",
+        "write"
+      ],
+      "services/serial_utilities/console": [
+        "read",
+        "write"
+      ],
+      "services/hotspot/landing": [
+        "read",
+        "write"
+      ],
+      "core": [
+        "read",
+        "write"
+      ],
+      "services/data_sender": [
+        "read",
+        "write"
+      ],
+      "services/ddns": [
+        "read",
+        "write"
+      ],
+      "network/devices": [
+        "read",
+        "write"
+      ],
+      "network/dhcp_servers/static_leases": [
+        "read",
+        "write"
+      ],
+      "network/dhcp_servers/general": [
+        "read",
+        "write"
+      ],
+      "status/network/dhcp_leases": [
+        "read",
+        "write"
+      ],
+      "status/network/lan": [
+        "read",
+        "write"
+      ],
+      "services/vpn/dmvpn": [
+        "read",
+        "write"
+      ],
+      "network/dns/general": [
+        "read",
+        "write"
+      ],
+      "system/admin/group/email": [
+        "read",
+        "write"
+      ],
+      "services/mobile_utilities/sms_gateway/email_to_sms": [
+        "read",
+        "write"
+      ],
+      "services/event_juggler": [
+        "read",
+        "write"
+      ],
+      "network/firewall/zones": [
+        "read",
+        "write"
+      ],
+      "network/firewall/settings": [
+        "read",
+        "write"
+      ],
+      "network/firewall/forwards": [
+        "read",
+        "write"
+      ],
+      "network/firewall/rules": [
+        "read",
+        "write"
+      ],
+      "network/firewall/nat_rules": [
+        "read",
+        "write"
+      ],
+      "network/firewall/attack_prevention": [
+        "read",
+        "write"
+      ],
+      "network/firewall/custom": [
+        "read",
+        "write"
+      ],
+      "network/firewall/dmz": [
+        "read",
+        "write"
+      ],
+      "status/network/firewall": [
+        "read",
+        "write"
+      ],
+      "system/flashops/general": [
+        "read",
+        "write"
+      ],
+      "services/gps/general": [
+        "read",
+        "write"
+      ],
+      "services/gps/map": [
+        "read",
+        "write"
+      ],
+      "services/gps/nmea_forwarding": [
+        "read",
+        "write"
+      ],
+      "services/gps/nmea_collecting": [
+        "read",
+        "write"
+      ],
+      "services/gps/nmea_sentences": [
+        "read",
+        "write"
+      ],
+      "services/gps/https": [
+        "read",
+        "write"
+      ],
+      "services/gps/avl": [
+        "read",
+        "write"
+      ],
+      "services/gps/input": [
+        "read",
+        "write"
+      ],
+      "services/gps/geofencing": [
+        "read",
+        "write"
+      ],
+      "services/vpn/gre": [
+        "read",
+        "write"
+      ],
+      "services/hotspot/general": [
+        "read",
+        "write"
+      ],
+      "services/hotspot/users": [
+        "read",
+        "write"
+      ],
+      "services/hotspot/groups": [
+        "read",
+        "write"
+      ],
+      "services/hotspot/user_management": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/hotspot": [
+        "read",
+        "write"
+      ],
+      "services/hotspot/hotspot2": [
+        "read",
+        "write"
+      ],
+      "services/io/impulse_counter": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/integrity": [
+        "read",
+        "write"
+      ],
+      "network/internet_status": [
+        "read",
+        "write"
+      ],
+      "services/io/general": [
+        "read",
+        "write"
+      ],
+      "services/io/scheduler": [
+        "read",
+        "write"
+      ],
+      "services/wol": [
+        "read",
+        "write"
+      ],
+      "network/wireless/ppsk_profiles": [
+        "read",
+        "write"
+      ],
+      "network/wireless/scan": [
+        "read",
+        "write"
+      ],
+      "network/vlan/port_based": [
+        "read",
+        "write"
+      ],
+      "network/wireless/radio": [
+        "read",
+        "write"
+      ],
+      "network/wireless/ssids": [
+        "read",
+        "write"
+      ],
+      "services/vpn/wireguard": [
+        "read",
+        "write"
+      ],
+      "services/wifi_scanner": [
+        "read",
+        "write"
+      ],
+      "status/widget": [
+        "read",
+        "write"
+      ],
+      "network/vlan/interface_based": [
+        "read",
+        "write"
+      ],
+      "services/webfilter/proxy": [
+        "read",
+        "write"
+      ],
+      "services/webfilter/site": [
+        "read",
+        "write"
+      ],
+      "network/failover/vrrp": [
+        "read",
+        "write"
+      ],
+      "system/wizard/step_lan": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/uscripts": [
+        "read",
+        "write"
+      ],
+      "services/sd_usb_tools/general": [
+        "read",
+        "write"
+      ],
+      "unauthenticated": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/traffic": [
+        "read",
+        "write"
+      ],
+      "services/logging": [
+        "read",
+        "write"
+      ],
+      "system/ui": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/troubleshoot/diagnostics": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/troubleshoot/tcp_dump": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/troubleshoot/logging": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/troubleshoot/general": [
+        "read",
+        "write"
+      ],
+      "status/system": [
+        "read",
+        "write"
+      ],
+      "system/info": [
+        "read",
+        "write"
+      ],
+      "superuser": [
+        "read",
+        "write"
+      ],
+      "services/vpn/stunnel": [
+        "read",
+        "write"
+      ],
+      "services/vpn/sstp": [
+        "read",
+        "write"
+      ],
+      "system/admin/multiusers/sso": [
+        "read",
+        "write"
+      ],
+      "network/traffic_shaping/sqm": [
+        "read",
+        "write"
+      ],
+      "system/maintenance/speedtest": [
+        "read",
+        "write"
+      ],
+      "services/snmp/traps": [
+        "read",
+        "write"
+      ],
+      "services/snmp/community": [
+        "read",
+        "write"
+      ],
+      "services/snmp/snmpv3": [
+        "read",
+        "write"
+      ],
+      "services/snmp/data_source": [
+        "read",
+        "write"
+      ],
+      "services/snmp/snmp_settings": [
+        "read",
+        "write"
+      ],
+      "services/site_manager": [
+        "read",
+        "write"
+      ],
+      "system/wizard/step_rms": [
+        "read",
+        "write"
+      ],
+      "system/wizard/step_wifi": [
+        "read",
+        "write"
+      ],
+      "system/wizard/step_wan": [
+        "read",
+        "write"
+      ],
+      "network/vrf": [
+        "read",
+        "write"
+      ],
+      "system/wizard/step_pwd": [
+        "read",
+        "write"
+      ],
+      "status/services": [
+        "read",
+        "write"
+      ],
+      "serial": [
+        "XXXX",
+        "XXXX"
+      ],
+      "system/flashops/fota": [
+        "read",
+        "write"
+      ],
+      "status/routes/dynamic/rip": [
+        "read",
+        "write"
+      ],
+      "network/routes/dynamic_routes/proto_rip": [
+        "read",
+        "write"
+      ],
+      "status/routes/dynamic/ospf": [
+        "read",
+        "write"
+      ],
+      "network/routes/dynamic_routes/proto_ospf": [
+        "read",
+        "write"
+      ],
+      "status/routes/dynamic/nhrp": [
+        "read",
+        "write"
+      ],
+      "network/routes/dynamic_routes/proto_nhrp": [
+        "read",
+        "write"
+      ],
+      "status/routes/dynamic/eigrp": [
+        "read",
+        "write"
+      ],
+      "network/routes/dynamic_routes/proto_eigrp": [
+        "read",
+        "write"
+      ],
+      "status/overview": [
+        "read",
+        "write"
+      ]
+    },
+    "file": {
+      "*": [
+        "read",
+        "write",
+        "exec"
+      ]
+    },
+    "ubus": {
+      "session": [
+        "access",
+        "login"
+      ],
+      "*": [
+        "*"
+      ]
+    }
+  }
+}

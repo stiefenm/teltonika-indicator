@@ -4,6 +4,7 @@ import GLib from 'gi://GLib';
 import Soup from 'gi://Soup?version=3.0';
 import System from 'system';
 import {RouterClient} from '../lib/client.js';
+import {isActiveSim} from '../lib/parse.js';
 
 const [base, expectFp] = ARGV;
 let failed = 0;
@@ -62,16 +63,21 @@ async function main() {
     }
 
     const rw = new RouterClient({host: base, username: 'monitor', getPassword: async () => 'secret'});
-    const before = (await rw.getModems())[0].activeSim;
-    await rw.switchSim('2-1');
-    const after = (await rw.getModems())[0].activeSim;
-    check(before === 1 && after === 2, 'switchSim toggles active SIM', `${before} → ${after}`);
-    await rw.switchSim('2-1'); // zurück
+    const cards = await rw.getSimCards();
+    check(cards.length === 3 && cards[2].esimProfile === '1', 'getSimCards', JSON.stringify(cards));
+    const esim = cards.find(c => c.position === 3);
+    await rw.activateSim('2-1', esim.id);
+    let m = (await rw.getModems())[0];
+    check(m.activeSim === 3 && isActiveSim(m, esim), 'activateSim → SIM 3 (eSIM)', `${m.activeSim}/${m.esimProfile}`);
+    check((await rw.getSimCards()).find(c => c.primary)?.position === 3, 'eSIM is now default');
+    await rw.activateSim('2-1', cards.find(c => c.position === 1).id);
+    m = (await rw.getModems())[0];
+    check(m.activeSim === 1, 'activateSim → back to SIM 1', String(m.activeSim));
     rw.destroy();
 
     const ro = new RouterClient({host: base, username: 'readonly', getPassword: async () => 'secret'});
     try {
-        await ro.switchSim('2-1');
+        await ro.activateSim('2-1', esim.id);
         check(false, 'read-only switch rejected');
     } catch (e) {
         check(e.kind === 'forbidden', 'read-only switch → forbidden', `${e.kind} ${e.message}`);

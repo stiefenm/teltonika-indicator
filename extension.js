@@ -14,7 +14,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {RouterClient} from './lib/client.js';
 import {lookupPassword} from './lib/secret.js';
 import {
-    formatBytes, formatLabel, formatMetric, primaryModem, signalQuality,
+    formatBytes, formatLabel, formatMetric, isActiveSim, primaryModem, signalQuality, simLabel,
 } from './lib/parse.js';
 
 const MAX_BACKOFF_S = 300;
@@ -89,7 +89,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._failures = 0;
         this._busy = false;
         this._modem = null;
-        this._switching = null; // {fromSim, started} während eines SIM-Wechsels
+        this._simCards = [];
+        this._switching = null; // {target, started} während eines SIM-Wechsels
         this._cancellable = new Gio.Cancellable();
 
         const box = new St.BoxLayout({style_class: 'panel-status-menu-box'});
@@ -112,7 +113,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
                 this._onConnectionSettingsChanged();
         }));
         this._settingsIds.push(this._settings.connect('changed::refresh-interval', () => this._reschedule(0)));
-        this._settingsIds.push(this._settings.connect('changed::allow-sim-switch', () => this._updateSimItem()));
+        for (const k of ['allow-sim-switch', 'hidden-sim-slots'])
+            this._settingsIds.push(this._settings.connect(`changed::${k}`, () => this._reschedule(0)));
         for (const k of ['show-net-type', 'show-band', 'show-signal', 'show-operator', 'signal-metric'])
             this._settingsIds.push(this._settings.connect(`changed::${k}`, () => this._updateLabel()));
 
@@ -134,8 +136,10 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this.menu.addAction('Jetzt aktualisieren', () => this._reschedule(0));
-        this._simItem = this.menu.addAction('SIM wechseln', () => this._confirmSimSwitch());
+        this._simItem = new PopupMenu.PopupSubMenuMenuItem('SIM wechseln');
         this._simItem.visible = false;
+        this._simKey = '';
+        this.menu.addMenuItem(this._simItem);
         this.menu.addAction('Router-Weboberfläche öffnen', () => {
             if (this._client?.baseUrl)
                 Gio.AppInfo.launch_default_for_uri(this._client.baseUrl, null);
@@ -192,7 +196,12 @@ class TeltonikaIndicator extends PanelMenu.Button {
         try {
             if (!this._settings.get_string('host'))
                 throw Object.assign(new Error('Router-Adresse in den Einstellungen eintragen'), {kind: 'config'});
-            const modems = await this._ensureClient().getModems(this._cancellable);
+            const client = this._ensureClient();
+            const modems = await client.getModems(this._cancellable);
+            if (this._settings.get_boolean('allow-sim-switch'))
+                this._simCards = await this._fetchSimCards(client);
+            else
+                this._simCards = [];
             if (this._cancellable.is_cancelled())
                 return;
             this._failures = 0;
@@ -211,6 +220,18 @@ class TeltonikaIndicator extends PanelMenu.Button {
         }
         if (next > 0)
             this._reschedule(next);
+    }
+
+    async _fetchSimCards(client) {
+        try {
+            return await client.getSimCards(this._cancellable);
+        } catch (e) {
+            if (e.kind === 'cancelled')
+                throw e;
+            // SIM-Liste ist optional – Statusanzeige soll daran nicht scheitern
+            console.warn(`teltonika-indicator: sim_cards/status: ${e.message}`);
+            return [];
+        }
     }
 
     // Liefert die nächste Wartezeit; 0 = Polling anhalten bis Einstellungen sich ändern
@@ -272,17 +293,17 @@ class TeltonikaIndicator extends PanelMenu.Button {
         const time = this._lastUpdate?.format('%H:%M:%S') ?? '';
         this._setStatus(`${m.name || 'Modem'} · Stand ${time}`);
         if (this._switching) {
-            const s = this._switching;
-            const elapsed = GLib.get_monotonic_time() / 1e6 - s.started;
-            if (m.activeSim !== null && m.activeSim !== s.fromSim && m.netType) {
+            const {target, started} = this._switching;
+            const elapsed = GLib.get_monotonic_time() / 1e6 - started;
+            if (isActiveSim(m, target) && m.netType) {
                 this._switching = null;
-                Main.notify('Teltonika Router', `SIM ${m.activeSim} ist aktiv (${formatLabel(m)})`);
+                Main.notify('Teltonika Router', `${simLabel(target)} ist aktiv (${formatLabel(m)})`);
             } else if (elapsed > SIM_SWITCH_TIMEOUT_S) {
                 this._switching = null;
                 Main.notify('Teltonika Router',
-                    `SIM-Wechsel nicht bestätigt – aktiv ist SIM ${m.activeSim ?? '?'}`);
+                    `SIM-Wechsel nicht bestätigt – aktiv ist ${this._activeSimText(m)}`);
             } else {
-                this._setStatus(`Wechsle von SIM ${s.fromSim} …`);
+                this._setStatus(`Wechsle zu ${simLabel(target)} …`);
             }
         }
         this._updateSimItem();
@@ -294,35 +315,57 @@ class TeltonikaIndicator extends PanelMenu.Button {
         r.rsrp.setValue(formatMetric(m.rsrp, 'rsrp'));
         r.rsrq.setValue(formatMetric(m.rsrq, 'rsrq'));
         r.sinr.setValue(formatMetric(m.sinr, 'sinr'));
-        r.sim.setValue([m.activeSim ? `SIM ${m.activeSim}` : null, m.simState]
+        r.sim.setValue([m.activeSim ? this._activeSimText(m) : null, m.simState]
             .filter(Boolean).join(' · ') || null);
         r.temperature.setValue(m.temperature !== null ? `${Number.isInteger(m.temperature) ? m.temperature : m.temperature.toFixed(1)} °C` : null);
         r.traffic.setValue(m.txBytes !== null || m.rxBytes !== null
             ? `${formatBytes(m.txBytes)} / ${formatBytes(m.rxBytes)}` : null);
     }
 
-    _updateSimItem() {
-        const m = this._modem;
-        const show = this._settings.get_boolean('allow-sim-switch') &&
-            m && (m.simCount ?? 0) >= 2 && m.activeSim !== null;
-        this._simItem.visible = Boolean(show);
-        if (!show)
-            return;
-        const target = m.activeSim === 1 ? 2 : 1;
-        this._simItem.label.text = this._switching ? 'SIM-Wechsel läuft …' : `Zu SIM ${target} wechseln`;
-        this._simItem.sensitive = !this._switching;
+    _activeSimText(m) {
+        const card = this._simCards.find(c => (!c.modem || c.modem === m.id) && isActiveSim(m, c));
+        return card ? simLabel(card) : `SIM ${m.activeSim}`;
     }
 
-    _confirmSimSwitch() {
+    // Wechselziele: SIMs dieses Modems außer der aktiven und den ausgeblendeten Slots
+    _simTargets() {
+        const m = this._modem;
+        if (!m || !this._settings.get_boolean('allow-sim-switch'))
+            return [];
+        const hidden = this._settings.get_value('hidden-sim-slots').deepUnpack();
+        return this._simCards.filter(c =>
+            (!c.modem || c.modem === m.id) && c.position !== null &&
+            !hidden.includes(c.position) && !isActiveSim(m, c));
+    }
+
+    _updateSimItem() {
+        const targets = this._simTargets();
+        this._simItem.visible = targets.length > 0 || Boolean(this._switching);
+        this._simItem.label.text = this._switching ? 'SIM-Wechsel läuft …' : 'SIM wechseln';
+        this._simItem.sensitive = !this._switching;
+
+        // Untermenü nur neu bauen, wenn sich die Ziele geändert haben
+        const key = targets.map(c => c.id).join(',');
+        if (key === this._simKey)
+            return;
+        this._simKey = key;
+        this._simItem.menu.removeAll();
+        for (const card of targets) {
+            this._simItem.menu.addAction(`Zu ${simLabel(card)} wechseln`,
+                () => this._confirmSimSwitch(card));
+        }
+    }
+
+    _confirmSimSwitch(card) {
         const m = this._modem;
         if (!m || this._switching)
             return;
-        const target = m.activeSim === 1 ? 2 : 1;
         const dialog = new ModalDialog.ModalDialog({styleClass: 'teltonika-dialog'});
         dialog.contentLayout.add_child(new Dialog.MessageDialogContent({
-            title: `Zu SIM ${target} wechseln?`,
-            description: 'Die Mobilfunkverbindung des Routers wird dabei für einige Sekunden ' +
-                'bis etwa eine Minute unterbrochen.',
+            title: `Zu ${simLabel(card)} wechseln?`,
+            description: `${simLabel(card)} wird Standard-SIM, danach baut der Router die ` +
+                'Mobilfunkverbindung neu auf. Sie ist dabei für einige Sekunden bis etwa ' +
+                'eine Minute unterbrochen.',
         }));
         dialog.addButton({label: 'Abbrechen', action: () => dialog.close(), key: Clutter.KEY_Escape});
         dialog.addButton({
@@ -330,25 +373,25 @@ class TeltonikaIndicator extends PanelMenu.Button {
             default: true,
             action: () => {
                 dialog.close();
-                this._switchSim(m);
+                this._switchSim(m, card);
             },
         });
         dialog.open();
     }
 
-    async _switchSim(m) {
-        this._switching = {fromSim: m.activeSim, started: GLib.get_monotonic_time() / 1e6};
+    async _switchSim(m, card) {
+        this._switching = {target: card, started: GLib.get_monotonic_time() / 1e6};
         this._updateSimItem();
-        this._setStatus(`Wechsle von SIM ${m.activeSim} …`);
+        this._setStatus(`Wechsle zu ${simLabel(card)} …`);
         try {
-            await this._ensureClient().switchSim(m.id, this._cancellable);
+            await this._ensureClient().activateSim(m.id, card.id, this._cancellable);
         } catch (e) {
             if (this._cancellable.is_cancelled())
                 return;
             this._switching = null;
             this._updateSimItem();
             const hint = e.kind === 'forbidden'
-                ? '\nDer RutOS-Benutzer braucht Schreibrecht für Netzwerk → Mobilfunk.' : '';
+                ? '\nDer RutOS-Benutzer braucht Schreibrecht für die mobilen Einstellungen.' : '';
             Main.notify('Teltonika Router', `SIM-Wechsel fehlgeschlagen: ${e.message}${hint}`);
             return;
         }

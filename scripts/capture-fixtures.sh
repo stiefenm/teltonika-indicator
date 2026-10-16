@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Echte API-Antworten vom Router als Test-Fixtures sichern.
 # Aufruf: scripts/capture-fixtures.sh 192.168.1.1 benutzer
-# IMEI/IMSI/ICCID/Seriennummern werden maskiert.
+# Identifizierende Werte (IMEI, ICCID, MACs, SSIDs, öffentliche IPs …) werden maskiert.
 set -euo pipefail
 host=${1:?Router-Adresse}; user=${2:?Benutzer}
 read -rsp "Passwort für $user@$host: " pass; echo
@@ -15,18 +15,7 @@ token=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"]
     || { echo "Login fehlgeschlagen: $login"; exit 1; }
 echo "Login ok"
 
-mask() {
-    python3 -c '
-import json, re, sys
-SECRET = re.compile(r"^(imei|imsi|iccid|serial|mac|macaddr|cellid|token)$")
-def walk(o):
-    if isinstance(o, dict):
-        return {k: ("XXXX" if SECRET.match(k) and isinstance(v, (str, int)) else walk(v)) for k, v in o.items()}
-    if isinstance(o, list):
-        return [walk(x) for x in o]
-    return o
-print(json.dumps(walk(json.load(sys.stdin)), indent=2, ensure_ascii=False))'
-}
+mask() { python3 -I "$(dirname "$0")/mask_fixture.py"; }
 
 for ep in unauthorized/status modems/status system/device/status system/device/usage/status \
           interfaces/status failover/status sim_cards/status dhcp/leases/ipv4/status \

@@ -1,0 +1,28 @@
+{
+  "success": true,
+  "data": [
+    {
+      "modem": "2-1",
+      "sim": "1",
+      "sms_limit_enabled": "0",
+      "pin_lock_enabled": "0",
+      "section_name": "cfg01aa0e"
+    },
+    {
+      "modem": "2-1",
+      "sim": "2",
+      "sms_limit_enabled": "0",
+      "pin_lock_enabled": "0",
+      "section_name": "cfg02aa0e"
+    },
+    {
+      "modem": "2-1",
+      "sim": "3",
+      "esim_profile": "1",
+      "sms_limit_enabled": "0",
+      "pin_lock_enabled": "0",
+      "section_name": "cfg05aa0e",
+      "primary": "1"
+    }
+  ]
+}

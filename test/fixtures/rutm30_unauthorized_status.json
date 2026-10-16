@@ -1,0 +1,11 @@
+{
+  "data": {
+    "lang": "en",
+    "device_identifier": "XXXX",
+    "device_model": "RUTM30",
+    "device_name": "RUTM30",
+    "api_version": "1.16.6",
+    "sso_providers": []
+  },
+  "success": true
+}

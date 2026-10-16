@@ -1,0 +1,268 @@
+{
+  "success": true,
+  "data": {
+    "ports": [
+      {
+        "num": 3,
+        "position": 2,
+        "name": "WAN",
+        "mac": "XXXX"
+      },
+      {
+        "num": 4,
+        "position": 1,
+        "name": "LAN",
+        "mac": "XXXX"
+      }
+    ],
+    "board": {
+      "network": {
+        "wan": {
+          "proto": "dhcp",
+          "device": "wan"
+        },
+        "lan": {
+          "ports": [
+            "lan"
+          ],
+          "default_ip": "192.168.1.1",
+          "proto": "static"
+        }
+      },
+      "modems": [
+        {
+          "dynamic_mtu": true,
+          "ipv6": true,
+          "volte": true,
+          "csd": false,
+          "wwan_gnss_conflict": false,
+          "framed_routing": true,
+          "low_signal_reconnect": true,
+          "id": "2-1",
+          "red_cap": false,
+          "verizon_disable_5g_sa": false,
+          "control": "2",
+          "desc": "Quectel RG52X/RM52X",
+          "boudrate": "115200",
+          "type": "gobinet",
+          "stop_bits": "8",
+          "gps": "1",
+          "product": "0801",
+          "vendor": "2c7c",
+          "band_list": [
+            "WCDMA_850",
+            "WCDMA_900",
+            "WCDMA_2100",
+            "LTE_B1",
+            "LTE_B3",
+            "LTE_B5",
+            "LTE_B7",
+            "LTE_B8",
+            "LTE_B20",
+            "LTE_B28",
+            "LTE_B32",
+            "LTE_B38",
+            "LTE_B40",
+            "LTE_B41",
+            "LTE_B42",
+            "LTE_B43",
+            "LTE_B71",
+            "NSA_5G_N1",
+            "NSA_5G_N3",
+            "NSA_5G_N5",
+            "NSA_5G_N7",
+            "NSA_5G_N8",
+            "NSA_5G_N20",
+            "NSA_5G_N28",
+            "NSA_5G_N38",
+            "NSA_5G_N40",
+            "NSA_5G_N41",
+            "NSA_5G_N71",
+            "NSA_5G_N75",
+            "NSA_5G_N76",
+            "NSA_5G_N77",
+            "NSA_5G_N78",
+            "5G_N1",
+            "5G_N3",
+            "5G_N5",
+            "5G_N7",
+            "5G_N8",
+            "5G_N20",
+            "5G_N28",
+            "5G_N38",
+            "5G_N40",
+            "5G_N41",
+            "5G_N71",
+            "5G_N75",
+            "5G_N76",
+            "5G_N77",
+            "5G_N78"
+          ],
+          "num": "1",
+          "builtin": true,
+          "simcount": 3,
+          "primary": true,
+          "auto_5g_mode": false,
+          "revision": "RG520NEBDCR03A06M4G_A0.300.A0.300",
+          "modem_func_id": 2,
+          "multi_apn": true,
+          "operator_scan": true,
+          "dhcp_filter": true
+        }
+      ],
+      "serial": [
+        {
+          "external_devices": []
+        }
+      ],
+      "hwinfo": {
+        "io": false,
+        "64mb_ram": false,
+        "asterisk": false,
+        "bacnet": false,
+        "baseband": false,
+        "basic_router": false,
+        "boot_part": false,
+        "bpoffload": false,
+        "bt": false,
+        "dot1x_client": false,
+        "downstream_kernel": false,
+        "guest_wifi": false,
+        "hi_storage": false,
+        "high_watchdog_priority": false,
+        "hnat": false,
+        "hw_offload": false,
+        "ledman_lite": false,
+        "modbus": true,
+        "modem_reset_quirk": false,
+        "mt7981_wifi": false,
+        "multi_device": false,
+        "ncm": false,
+        "ntrip": false,
+        "port_mirror": false,
+        "pppmobile": false,
+        "qrtrpipes": false,
+        "rndis": false,
+        "rootfs_part": false,
+        "serial_reset_quirk": false,
+        "smp": false,
+        "sw_offload": false,
+        "testing_kernel": false,
+        "tlt_failsafe_boot": false,
+        "usb_port": false,
+        "vendor_wifi": false,
+        "verified_boot": false,
+        "wps": false,
+        "dot1x-client": true,
+        "dot1x-server": true,
+        "port-mirror": true,
+        "esim-p": true,
+        "dual_sim": true,
+        "console": false,
+        "esim": true,
+        "dual_modem": false,
+        "soft_port_mirror": true,
+        "micro_usb": false,
+        "stm_can": false,
+        "fxs": false,
+        "nat_offloading": true,
+        "gigabit_port": true,
+        "2_5_gigabit_port": false,
+        "usb": false,
+        "reset_button": true,
+        "mobile": true,
+        "wifi": true,
+        "dual_band_ssid": true,
+        "gps": false,
+        "ethernet": true,
+        "sfp_port": false,
+        "ios": true,
+        "power_ios": false,
+        "at_sim": true,
+        "rs232": false,
+        "rs485": false,
+        "serial": "XXXX",
+        "dsa": true,
+        "port_link": true,
+        "multi_tag": true,
+        "bluetooth": false,
+        "gateway": false,
+        "industrial_access_point": false,
+        "mbus": false,
+        "poe": false,
+        "sd_card": false,
+        "single_port": false,
+        "user_led": false,
+        "xfrm-offload": false,
+        "128mb_ram": false,
+        "consumer_access_point": false,
+        "access_point": false,
+        "hw_nat": true,
+        "tpm": true
+      },
+      "wlan": {
+        "wlan1": {
+          "bssid_limit": 8
+        },
+        "wlan0": {
+          "bssid_limit": 8
+        }
+      },
+      "port_security": {
+        "fallback_vlan": false,
+        "isolation_method": "dsa_isolate",
+        "guest_vlan": false
+      },
+      "network_options": {
+        "max_mtu": 2030,
+        "readonly_vlans": 1,
+        "vlans": 4094
+      },
+      "model": {
+        "platform": "RUTM",
+        "name": "Teltonika RUTM30",
+        "id": "teltonika,rutm"
+      },
+      "checks": [
+        {
+          "action": "reboot",
+          "name": "pcie_check",
+          "path": "/sys/class/pci_bus/0000:00"
+        }
+      ],
+      "release_version": "7.13.1"
+    },
+    "features": {
+      "ipv6": true
+    },
+    "mnfinfo": {
+      "hwver": "0002",
+      "batch": "0012",
+      "macEth": "XXXX",
+      "serial": "XXXX",
+      "mac": "XXXX",
+      "sim3_boot_iccid": "N/A",
+      "sim2_boot_iccid": "N/A",
+      "sim1_boot_iccid": "N/A",
+      "name": "RUTM3000XXXX",
+      "blver": "2.26.0"
+    },
+    "static": {
+      "fw_build_date": "2026-10-08 12:29:35",
+      "hostname": "XXXX",
+      "fw_version": "RUTM_R_00.07.24.6",
+      "device_name": "RUTM30",
+      "model": "Teltonika RUTM30",
+      "kernel": "6.6.126",
+      "cpu_count": 4,
+      "system": "MediaTek MT7621 ver:1 eco:3",
+      "board_name": "teltonika,rutm",
+      "release": {
+        "distribution": "RUTOS",
+        "version": "R_00.07.24.6",
+        "description": "RUTOS R_00.07.24.6",
+        "revision": "r16279-5cc0535800"
+      }
+    }
+  }
+}
