@@ -14,7 +14,8 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {RouterClient} from './lib/client.js';
 import {lookupPassword} from './lib/secret.js';
 import {
-    formatBytes, formatLabel, formatMetric, isActiveSim, primaryModem, signalQuality, simKey, simLabel,
+    dataLimitFor, dataLimitLevel, dataLimitPercent, formatBytes, formatDataLimit, formatLabel, formatMetric, isActiveSim,
+    primaryModem, signalQuality, simKey, simLabel,
 } from './lib/parse.js';
 
 const MAX_BACKOFF_S = 300;
@@ -33,6 +34,7 @@ const QUALITY_ICONS = [
 ];
 const ICON_OFFLINE = 'network-cellular-offline-symbolic';
 const ICON_ACQUIRING = 'network-cellular-acquiring-symbolic';
+const LIMIT_CLASSES = ['', 'teltonika-limit-warn', 'teltonika-limit-full'];
 
 const STATUS_TEXT = {
     config: 'Nicht konfiguriert',
@@ -55,6 +57,8 @@ const DETAIL_ROWS = [
     ['sim', 'SIM'],
     ['temperature', 'Modem-Temperatur'],
     ['traffic', 'Daten ↑/↓'],
+    ['datalimit', 'Datenlimit'],
+    ['limitreset', 'Limit-Reset'],
 ];
 
 const InfoRow = GObject.registerClass(
@@ -78,6 +82,13 @@ class InfoRow extends PopupMenu.PopupBaseMenuItem {
     setValue(text) {
         this._value.text = text ?? '–';
     }
+
+    setValueClass(cls) {
+        for (const c of LIMIT_CLASSES.filter(Boolean))
+            this._value.remove_style_class_name(c);
+        if (cls)
+            this._value.add_style_class_name(cls);
+    }
 });
 
 const TeltonikaIndicator = GObject.registerClass(
@@ -92,6 +103,9 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._busy = false;
         this._modem = null;
         this._simCards = [];
+        this._dataLimits = [];
+        this._activeLimit = null;
+        this._limitNotified = {}; // Interface → zuletzt gemeldete Stufe (1 = Warnung, 2 = ausgeschöpft)
         this._switching = null; // {target, hops, maxHops, lastKey, hopStarted} während eines SIM-Wechsels
         this._cancellable = new Gio.Cancellable();
 
@@ -102,7 +116,14 @@ class TeltonikaIndicator extends PanelMenu.Button {
             y_align: Clutter.ActorAlign.CENTER,
             style_class: 'teltonika-label',
         });
+        // Datenlimit der aktiven SIM: gelb ab Warnschwelle, rot wenn ausgeschöpft
+        this._limitIcon = new St.Icon({
+            icon_name: 'dialog-warning-symbolic',
+            style_class: 'system-status-icon',
+            visible: false,
+        });
         box.add_child(this._icon);
+        box.add_child(this._limitIcon);
         box.add_child(this._label);
         this.add_child(box);
 
@@ -119,6 +140,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
             this._settingsIds.push(this._settings.connect(`changed::${k}`, () => this._reschedule(0)));
         for (const k of ['show-net-type', 'show-band', 'show-signal', 'show-operator', 'signal-metric'])
             this._settingsIds.push(this._settings.connect(`changed::${k}`, () => this._updateLabel()));
+        this._settingsIds.push(this._settings.connect('changed::data-limit-warning', () => this._updateDataLimit()));
 
         this._reschedule(0);
     }
@@ -146,6 +168,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._defaultItem.visible = false;
         this._defaultKey = '';
         this.menu.addMenuItem(this._defaultItem);
+        this._clearLimitItem = this.menu.addAction('Datenlimit zurücksetzen …', () => this._confirmClearLimit());
+        this._clearLimitItem.visible = false;
         this.menu.addAction('Router-Weboberfläche öffnen', () => {
             if (this._client?.baseUrl)
                 Gio.AppInfo.launch_default_for_uri(this._client.baseUrl, null);
@@ -214,6 +238,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
             const client = this._ensureClient();
             const modems = await client.getModems(this._cancellable);
             this._simCards = await this._fetchSimCards(client);
+            this._dataLimits = await this._fetchDataLimits(client);
             if (this._cancellable.is_cancelled())
                 return;
             this._failures = 0;
@@ -250,6 +275,18 @@ class TeltonikaIndicator extends PanelMenu.Button {
         }
     }
 
+    async _fetchDataLimits(client) {
+        try {
+            return await client.getDataLimits(this._cancellable);
+        } catch (e) {
+            if (e.kind === 'cancelled')
+                throw e;
+            // Datenlimit ist optional (ältere Firmware, fehlendes Leserecht)
+            console.warn(`teltonika-indicator: data_limit/status: ${e.message}`);
+            return [];
+        }
+    }
+
     // Liefert die nächste Wartezeit; 0 = Polling anhalten bis Einstellungen sich ändern
     _handleError(e, interval) {
         this._failures++;
@@ -264,6 +301,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
         for (const row of Object.values(this._rows))
             row.setValue('–');
         this._updateSimItem();
+        this._updateDataLimit();
 
         if (kind === 'config' || kind === 'cert')
             return 0;
@@ -325,6 +363,40 @@ class TeltonikaIndicator extends PanelMenu.Button {
         r.temperature.setValue(m.temperature !== null ? `${Number.isInteger(m.temperature) ? m.temperature : m.temperature.toFixed(1)} °C` : null);
         r.traffic.setValue(m.txBytes !== null || m.rxBytes !== null
             ? `${formatBytes(m.txBytes)} / ${formatBytes(m.rxBytes)}` : null);
+        this._updateDataLimit();
+    }
+
+    // Popup-Zeilen, Panel-Warnsymbol und Benachrichtigung für das Limit der aktiven SIM
+    _updateDataLimit() {
+        const m = this._modem;
+        const l = m?.activeSim
+            ? dataLimitFor(this._dataLimits, m.id, {position: m.activeSim, esimProfile: m.esimProfile}) : null;
+        this._activeLimit = l;
+        const level = dataLimitLevel(l, this._settings.get_int('data-limit-warning'));
+        const r = this._rows;
+        r.datalimit.visible = r.limitreset.visible = Boolean(l);
+        r.datalimit.setValue(formatDataLimit(l));
+        r.datalimit.setValueClass(LIMIT_CLASSES[level]);
+        r.limitreset.setValue(l?.due ? GLib.DateTime.new_from_unix_local(l.due).format('%a %d.%m. %H:%M') : null);
+        this._limitIcon.visible = level > 0;
+        for (const c of LIMIT_CLASSES.filter(Boolean))
+            this._limitIcon.remove_style_class_name(c);
+        if (level > 0)
+            this._limitIcon.add_style_class_name(LIMIT_CLASSES[level]);
+        this._clearLimitItem.visible = Boolean(l) && this._settings.get_boolean('allow-sim-switch');
+        this._clearLimitItem.sensitive = !this._switching;
+
+        if (!l)
+            return;
+        // Je Stufe einmal melden; nach Reset oder neuem Zeitraum wieder scharf
+        const prev = this._limitNotified[l.interface] ?? 0;
+        this._limitNotified[l.interface] = level;
+        if (level > prev) {
+            const sim = this._activeSimText(m);
+            Main.notify('Teltonika Router', level === 2
+                ? `Datenlimit von ${sim} ausgeschöpft (${formatDataLimit(l)})`
+                : `${sim}: Datenlimit fast erreicht (${formatDataLimit(l)})`);
+        }
     }
 
     // Ohne Betreiber – der steht in der Popup-Zeile darüber
@@ -371,7 +443,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._simItem.label.text = this._switching ? 'SIM-Wechsel läuft …' : 'SIM wechseln';
         this._simItem.sensitive = !this._switching;
         this._fillSubmenu(this._simItem, '_simKey', targets,
-            card => `Zu ${simLabel(card)} wechseln`, card => this._confirmSimSwitch(card));
+            card => `Zu ${simLabel(card)} wechseln${this._limitSuffix(card)}`, card => this._confirmSimSwitch(card));
 
         const cards = this._visibleSimCards();
         const current = cards.find(c => c.primary);
@@ -380,6 +452,12 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._defaultItem.sensitive = !this._switching;
         this._fillSubmenu(this._defaultItem, '_defaultKey', cards.filter(c => !c.primary),
             card => `${simLabel(card)} als Standard festlegen`, card => this._confirmDefaultSim(card));
+    }
+
+    // Verbrauch einer anderen SIM, z. B. „ · Limit 96 %“
+    _limitSuffix(card) {
+        const l = dataLimitFor(this._dataLimits, this._modem?.id, card);
+        return l ? ` · Limit ${dataLimitPercent(l)} %` : '';
     }
 
     // Untermenü nur neu bauen, wenn sich die Einträge geändert haben
@@ -438,6 +516,30 @@ class TeltonikaIndicator extends PanelMenu.Button {
             c.primary = c.id === card.id;
         this._updateSimItem();
         Main.notify('Teltonika Router', `Standard-SIM ist jetzt ${simLabel(card)}`);
+    }
+
+    _confirmClearLimit() {
+        const l = this._activeLimit;
+        const m = this._modem;
+        if (!l || !m)
+            return;
+        const sim = this._activeSimText(m);
+        this._confirm(`Datenlimit von ${sim} zurücksetzen?`,
+            `Der Zähler (${formatDataLimit(l)}) wird auf 0 gesetzt. ` +
+            'Das lässt sich nicht rückgängig machen.',
+            'Zurücksetzen', () => this._clearLimit(l.interface, sim));
+    }
+
+    async _clearLimit(iface, sim) {
+        try {
+            await this._ensureClient().clearDataLimit(iface, this._cancellable);
+        } catch (e) {
+            if (!this._cancellable.is_cancelled())
+                Main.notify('Teltonika Router', `Datenlimit zurücksetzen fehlgeschlagen: ${e.message}${this._rightsHint(e)}`);
+            return;
+        }
+        Main.notify('Teltonika Router', `Datenlimit von ${sim} zurückgesetzt`);
+        this._reschedule(0);
     }
 
     _rightsHint(e) {

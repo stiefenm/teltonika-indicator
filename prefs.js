@@ -34,7 +34,7 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         const group = new Adw.PreferencesGroup({
             title: 'Router',
             description: 'RutOS 7.x REST-API. Empfohlen: eigener Benutzer mit Leserechten ' +
-                '(plus Schreibrecht für Netzwerk → Mobilfunk, falls SIM-Wechsel gewünscht).',
+                '(plus Schreibrecht für Netzwerk → Mobilfunk, falls SIM-Aktionen gewünscht).',
         });
 
         const host = new Adw.EntryRow({title: 'Adresse (z. B. 192.168.1.1)', show_apply_button: true});
@@ -69,8 +69,9 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         group.add(interval);
 
         const sim = new Adw.SwitchRow({
-            title: 'SIM-Wechsel im Menü anbieten',
-            subtitle: 'Benutzer braucht Schreibrecht für die mobilen Einstellungen',
+            title: 'SIM-Aktionen im Menü anbieten',
+            subtitle: 'SIM-Wechsel, Standard-SIM und Datenlimit zurücksetzen – ' +
+                'Benutzer braucht Schreibrecht für die mobilen Einstellungen',
         });
         settings.bind('allow-sim-switch', sim, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(sim);
@@ -224,6 +225,14 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         combo.connect('notify::selected', () =>
             settings.set_string('signal-metric', METRICS[combo.selected][0]));
         group.add(combo);
+
+        const warn = new Adw.SpinRow({
+            title: 'Datenlimit-Warnung',
+            subtitle: 'Gelbes Warnsymbol ab diesem Verbrauch in Prozent, 0 = nur bei ausgeschöpftem Limit (rot)',
+            adjustment: new Gtk.Adjustment({lower: 0, upper: 99, step_increment: 1, page_increment: 10}),
+        });
+        settings.bind('data-limit-warning', warn, 'value', Gio.SettingsBindFlags.DEFAULT);
+        group.add(warn);
         return group;
     }
 

@@ -80,6 +80,17 @@ async function main() {
     m = (await rw.getModems())[0];
     check(m.activeSim === 1 && (await rw.getSimCards()).find(c => c.primary)?.position === 3,
         'setDefaultSim keeps active SIM', `${m.activeSim}`);
+    const limits = await rw.getDataLimits();
+    check(limits.length === 3 && limits[2].position === 3 && limits[2].esimProfile === '1',
+        'getDataLimits maps eSIM interface', JSON.stringify(limits));
+    try {
+        await rw.clearDataLimit('mob1s3a1e2');
+        check(false, 'clear inactive interface rejected');
+    } catch (e) {
+        check(e.kind === 'http', 'clear inactive interface → http', `${e.kind} ${e.message}`);
+    }
+    await rw.clearDataLimit('mob1s1a1');
+    check((await rw.getDataLimits())[0].used === 0, 'clearDataLimit resets active SIM');
     rw.destroy();
 
     const ro = new RouterClient({host: base, username: 'readonly', getPassword: async () => 'secret'});
@@ -90,6 +101,14 @@ async function main() {
         check(e.kind === 'forbidden', 'read-only switch → forbidden', `${e.kind} ${e.message}`);
     }
     check((await ro.getModems()).length === 2, 'read-only can still read');
+    const roLimits = await ro.getDataLimits();
+    check(roLimits[2].position === 3 && roLimits[2].esimProfile === null, 'limits without interfaces/config');
+    try {
+        await ro.clearDataLimit('mob1s1a1');
+        check(false, 'read-only clear rejected');
+    } catch (e) {
+        check(e.kind === 'forbidden', 'read-only clear → forbidden', e.kind);
+    }
 
     const off = new RouterClient({host: 'http://127.0.0.1:1', username: 'x', getPassword: async () => 'x'});
     try {

@@ -22,13 +22,18 @@
     </key>
     <key name="allow-sim-switch" type="b">
       <default>false</default>
-      <summary>SIM-Wechsel im Menü anbieten</summary>
+      <summary>SIM-Aktionen im Menü anbieten (SIM-Wechsel, Standard-SIM, Datenlimit zurücksetzen)</summary>
       <description>Benötigt einen RutOS-Benutzer mit Schreibrecht für Netzwerk → Mobilfunk.</description>
     </key>
     <key name="hidden-sim-slots" type="ai">
       <default>[]</default>
       <summary>SIM-Steckplätze, die im Wechsel-Menü nicht angeboten werden</summary>
       <description>Z. B. leere Slots – die API meldet nicht, ob ein Slot belegt ist.</description>
+    </key>
+    <key name="data-limit-warning" type="i">
+      <range min="0" max="99"/>
+      <default>80</default>
+      <summary>Warnschwelle für das Datenlimit in Prozent (0 = nur bei ausgeschöpftem Limit)</summary>
     </key>
     <key name="sim-operators" type="a{ss}">
       <default>{}</default>

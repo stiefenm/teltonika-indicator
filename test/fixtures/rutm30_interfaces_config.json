@@ -1,0 +1,42 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "lan",
+      "proto": "static",
+      "enabled": "1",
+      ".type": "interface"
+    },
+    {
+      "id": "wan",
+      "proto": "dhcp",
+      "enabled": "1",
+      ".type": "interface"
+    },
+    {
+      "id": "mob1s1a1",
+      "proto": "wwan",
+      "modem": "2-1",
+      "sim": "1",
+      "enabled": "1",
+      ".type": "interface"
+    },
+    {
+      "id": "mob1s2a1",
+      "proto": "wwan",
+      "modem": "2-1",
+      "sim": "2",
+      "enabled": "1",
+      ".type": "interface"
+    },
+    {
+      "id": "mob1s3a1e2",
+      "proto": "wwan",
+      "modem": "2-1",
+      "sim": "3",
+      "esim_profile": "1",
+      "enabled": "1",
+      ".type": "interface"
+    }
+  ]
+}

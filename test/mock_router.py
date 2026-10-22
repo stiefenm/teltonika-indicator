@@ -3,6 +3,7 @@
 
 Endpunkte: POST /api/login, GET /api/modems/status, GET /api/sim_cards/status,
 PUT /api/sim_cards/config/{id}, POST /api/modems/{id}/actions/{switch_sim,restart_connection},
+GET /api/data_limit/status, GET /api/interfaces/config, POST /api/data_limit/actions/clear,
 POST /_test/expire (alle Tokens ungültig), POST /_test/fixture?name=…
 """
 import json, secrets, ssl, sys
@@ -16,7 +17,15 @@ USERS = {"monitor": ("secret", True), "readonly": ("secret", False)}
 tokens = {}  # token → Benutzer
 state = {"fixture": "modems_status.json", "active": {}}  # modem → (slot, esim_profile)
 sim_cards = json.loads((FIX / "rutm30_sim_cards_status.json").read_text())["data"]
+data_limits = json.loads((FIX / "rutm30_data_limit_status.json").read_text())["data"]
+interfaces = json.loads((FIX / "rutm30_interfaces_config.json").read_text())["data"]
 EMPTY_SLOTS = {2}  # wie beim RUTM30 des Nutzers: Slot 2 unbelegt
+
+
+def active_interface(modem):
+    slot, profile = state["active"].get(modem, (1, None))
+    return next((i["id"] for i in interfaces if i.get("modem") == modem and i.get("sim") == str(slot)
+                 and i.get("esim_profile") == profile), None)
 
 
 class H(BaseHTTPRequestHandler):
@@ -64,6 +73,15 @@ class H(BaseHTTPRequestHandler):
             card = next((c for c in sim_cards if c["modem"] == parts[2] and c.get("primary") == "1"), None)
             if card:
                 state["active"][parts[2]] = (int(card["sim"]), card.get("esim_profile"))
+            return self.reply(200, {"success": True})
+        if u.path == "/api/data_limit/actions/clear":
+            if not self.can_write():
+                return
+            iface = (json.loads(data or b"{}").get("data") or {}).get("interface")
+            # Wie RutOS: nur das Interface der aktiven SIM
+            if iface != active_interface("2-1"):
+                return self.reply(400, {"success": False, "errors": [{"code": 100, "error": "Interface is not active"}]})
+            next(d for d in data_limits if d["id"] == iface)["data_used"] = "0"
             return self.reply(200, {"success": True})
         if u.path == "/_test/expire":
             tokens.clear()
@@ -122,6 +140,12 @@ class H(BaseHTTPRequestHandler):
                         for k in ("conntype", "ntype", "rssi", "rsrp", "rsrq", "sinr", "band", "ca_signal"):
                             m.pop(k, None)
             return self.reply(200, data)
+        if self.path == "/api/data_limit/status":
+            return self.reply(200, {"success": True, "data": data_limits})
+        if self.path == "/api/interfaces/config":
+            if not USERS[self.user()][1]:
+                return self.reply(403, {"success": False, "errors": [{"code": 122, "error": "Forbidden", "source": "ACL"}]})
+            return self.reply(200, {"success": True, "data": interfaces})
         if self.path == "/api/sim_cards/status":
             return self.reply(200, {"success": True, "data": sim_cards})
         self.reply(404, {"success": False})

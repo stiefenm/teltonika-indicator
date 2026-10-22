@@ -18,7 +18,7 @@ echo "Login ok"
 mask() { python3 -I "$(dirname "$0")/mask_fixture.py"; }
 
 for ep in unauthorized/status modems/status system/device/status system/device/usage/status \
-          interfaces/status failover/status sim_cards/status dhcp/leases/ipv4/status \
+          interfaces/status failover/status sim_cards/status data_limit/status dhcp/leases/ipv4/status \
           wireless/interfaces/status gps/position/status users/acls/options sim_switch/status; do
     name="rutm30_$(tr '/' '_' <<<"$ep").json"
     code=$(curl -sk -o "$resp" -w '%{http_code}' -H "Authorization: Bearer $token" "$base/$ep")

@@ -60,6 +60,16 @@ So macht es die WebUI (aus `/assets/app.mobile.app-*.js`, Firmware RUTM_R_00.07.
   (Kandidaten: `network/mobile/general`, `network/mobile/sim_switch`).
 - `POST /api/bulk` mit `{"data":[{"endpoint":"/api/…","method":"GET"},…]}` bündelt mehrere Abfragen.
 
+## Datenlimit (am RUTM30 geprüft, Firmware RUTM_R_00.07.24.6)
+
+- `GET /api/data_limit/status` – pro Mobil-Interface `data_used` (Bytes, String), `data_limit` (Bytes, Zahl),
+  `enabled`, `due_reset_time` (Unix-Zeit), `data_warning_enabled`. Interfaces ohne Limit nur mit `enabled: "0"`.
+- `GET /api/data_limit/config` – Limit in MB, `period` (day/week/month), `reset_weekday`/`reset_day`.
+- Zuordnung Interface → SIM über `GET /api/interfaces/config`: `modem`, `sim`, `esim_profile`.
+  Der Name allein reicht nicht: `mob1s3a1e2` ist eSIM-Profil 1.
+- `POST /api/data_limit/actions/clear` mit `{"data":{"interface":"mob1s1a1"}}` setzt den Zähler zurück
+  (wie der Button in der WebUI). Geht nur für das aktive Interface.
+
 ## Weitere Endpunkte (für v1.0)
 
 - `system/device/status` – Firmware, Modell

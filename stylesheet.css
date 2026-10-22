@@ -8,6 +8,9 @@
 .teltonika-q1 { color: #ffa348; }
 .teltonika-q0 { color: #f66151; }
 
+.teltonika-limit-warn { color: #f8e45c; }
+.teltonika-limit-full { color: #f66151; }
+
 .teltonika-status {
   font-weight: bold;
 }

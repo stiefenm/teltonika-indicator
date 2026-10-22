@@ -1,0 +1,28 @@
+{
+  "data": [
+    {
+      "data_used": "141475868",
+      "enabled": "1",
+      "due_reset_time": 1793052000,
+      "data_limit": 7864320000,
+      "id": "mob1s1a1",
+      "data_warning_enabled": "0",
+      "interface": "mob1s1a1"
+    },
+    {
+      "id": "mob1s2a1",
+      "enabled": "0",
+      "interface": "mob1s2a1"
+    },
+    {
+      "data_used": "31213043097",
+      "enabled": "1",
+      "due_reset_time": 1793487600,
+      "data_limit": 32212254720,
+      "id": "mob1s3a1e2",
+      "data_warning_enabled": "0",
+      "interface": "mob1s3a1e2"
+    }
+  ],
+  "success": true
+}

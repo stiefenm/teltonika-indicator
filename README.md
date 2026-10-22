@@ -20,7 +20,8 @@ gnome-extensions prefs teltonika-indicator@mstiefenhofer
 
 In den Einstellungen Router-Adresse, Benutzer und Passwort eintragen und „Testen“ klicken.
 Das Passwort liegt im GNOME-Schlüsselbund. Empfohlen ist ein eigener RutOS-Benutzer mit Leserechten.
-Für den optionalen SIM-Wechsel im Menü (Einstellung „SIM-Wechsel im Menü anbieten“)
+Für die optionalen SIM-Aktionen im Menü (Einstellung „SIM-Aktionen im Menü anbieten“: SIM-Wechsel,
+Standard-SIM, Datenlimit zurücksetzen)
 braucht er zusätzlich Schreibrecht für die mobilen Einstellungen.
 
 ## Funktionsweise
@@ -39,6 +40,11 @@ braucht er zusätzlich Schreibrecht für die mobilen Einstellungen.
 - „Beenden“ im Menü deaktiviert die Erweiterung (bleibt auch nach Neuanmeldung aus).
   Wieder starten über den Starter „Teltonika Indicator“ in der App-Übersicht
   (führt `gnome-extensions enable …` aus, keine Neuanmeldung nötig).
+- Datenlimit (Netzwerk → Mobil → Limits am Router): Das Popup zeigt Verbrauch/Limit der aktiven SIM und den nächsten
+  automatischen Reset. In der Leiste erscheint ein Warnsymbol, gelb ab der Warnschwelle (Standard 80 %, einstellbar),
+  rot bei ausgeschöpftem Limit, dazu je Stufe einmal eine Benachrichtigung. Das SIM-Wechsel-Menü zeigt den Verbrauch
+  der anderen SIMs. „Datenlimit zurücksetzen …“ (nach Bestätigung) setzt den Zähler der aktiven SIM auf 0;
+  es wird zusammen mit dem SIM-Wechsel freigeschaltet und braucht dasselbe Schreibrecht.
 - Leere Slots lassen sich in den Einstellungen ausblenden, weil die API nicht meldet, ob ein Slot belegt ist.
 
 ## Entwicklung

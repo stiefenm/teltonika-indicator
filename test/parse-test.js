@@ -57,6 +57,24 @@ eq(P.isActiveSim({activeSim: 3, esimProfile: '1'}, cards[2]), true, 'active eSIM
 eq(P.isActiveSim({activeSim: 3, esimProfile: '2'}, cards[2]), false, 'other eSIM profile');
 eq(P.normalizeModem({active_sim: 3, esim_profile: '1'}).esimProfile, '1', 'modem esim_profile');
 
+const ifaces = P.parseMobileInterfaces(load('rutm30_interfaces_config.json'));
+eq(ifaces.mob1s3a1e2, {modem: '2-1', position: 3, esimProfile: '1'}, 'eSIM interface mapping');
+eq(ifaces.lan, undefined, 'non-mobile interface ignored');
+const limits = P.parseDataLimits(load('rutm30_data_limit_status.json'), ifaces);
+eq(limits.map(l => [l.interface, l.position, l.esimProfile, l.enabled]),
+    [['mob1s1a1', 1, null, true], ['mob1s2a1', 2, null, false], ['mob1s3a1e2', 3, '1', true]], 'data limits');
+eq(P.dataLimitFor(limits, '2-1', {position: r.activeSim, esimProfile: r.esimProfile})?.interface, 'mob1s1a1', 'limit of active SIM 1');
+eq(P.dataLimitFor(limits, '2-1', cards[2])?.interface, 'mob1s3a1e2', 'limit of eSIM card');
+eq(P.dataLimitFor(limits, '2-1', cards[1]), null, 'SIM 2 without limit');
+eq(P.dataLimitFor(limits, '2-1', {position: 3, esimProfile: '2'}), null, 'other eSIM profile has no limit');
+eq(P.formatDataLimit(limits[0]), '134.9 MB / 7.3 GB (1 %)', 'format limit');
+eq(P.formatDataLimit(limits[2]), '29.1 GB / 30.0 GB (96 %)', 'format eSIM limit');
+eq(limits.map(l => P.dataLimitLevel(l)), [0, 0, 1], 'limit levels');
+eq(P.dataLimitLevel({...limits[2], used: limits[2].limit}), 2, 'limit exhausted');
+const half = {enabled: true, used: 85, limit: 100};
+eq([P.dataLimitLevel(half), P.dataLimitLevel(half, 90), P.dataLimitLevel(half, 0)], [1, 0, 0], 'warn threshold');
+eq(P.parseDataLimits(load('rutm30_data_limit_status.json'))[2].position, 3, 'slot from name without config');
+
 const ms = P.parseModems(load('modems_status_5g_nsa.json'));
 eq(ms.length, 2, 'two modems');
 const p = P.primaryModem(ms);
