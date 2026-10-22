@@ -1,9 +1,14 @@
 {
   "uuid": "teltonika-indicator@mstiefenhofer",
   "name": "Teltonika Router Indicator",
-  "description": "Zeigt Mobilfunk-Status (Netztyp, Band, Signal, Betreiber) eines Teltonika-Routers mit RutOS 7.x in der oberen Leiste.",
-  "shell-version": ["48", "49", "50"],
+  "description": "Shows the cellular status (network type, band, signal, operator) of a Teltonika router running RutOS 7.x in the top bar. Optional SIM switching, default SIM and data limit actions.\n\nZeigt den Mobilfunk-Status (Netztyp, Band, Signal, Betreiber) eines Teltonika-Routers mit RutOS 7.x in der oberen Leiste.",
+  "shell-version": [
+    "48",
+    "49",
+    "50"
+  ],
   "settings-schema": "org.gnome.shell.extensions.teltonika-indicator",
   "url": "",
-  "version-name": "0.1.0"
+  "version-name": "1.0.0",
+  "version": 1
 }

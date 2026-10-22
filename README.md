@@ -5,7 +5,7 @@ mit RutOS 7.x in der oberen Leiste anzeigt, z. B. `5G B3+B20+n78 −95 dBm`.
 Das Icon ist nach Signalqualität eingefärbt. Das Popup zeigt Betreiber, Netz, Band,
 RSSI/RSRP/RSRQ/SINR, SIM, Modemtemperatur und Datenzähler.
 
-Status: **v0.1 (MVP)**, getestet gegen einen Mock-Router, noch nicht am echten RUTM30.
+Status: **v1.0**, getestet am Teltonika RUTM30 (RutOS 7.x) und gegen einen Mock-Router.
 Hintergrund: [docs/BRIEF.md](docs/BRIEF.md), API-Notizen: [docs/API.md](docs/API.md).
 
 ## Installation
@@ -63,3 +63,7 @@ scripts/capture-fixtures.sh   echte Router-Antworten (maskiert) als Fixtures sic
 make test         # Parser-Tests + Client gegen Mock-Router (HTTP und HTTPS)
 journalctl -f -o cat /usr/bin/gnome-shell | grep -i teltonika
 ```
+
+## Lizenz
+
+GPL-2.0-or-later, siehe [LICENSE](LICENSE).
