@@ -9,6 +9,5 @@
   ],
   "settings-schema": "org.gnome.shell.extensions.teltonika-indicator",
   "url": "",
-  "version-name": "1.0.0",
-  "version": 1
+  "version-name": "1.0.0"
 }

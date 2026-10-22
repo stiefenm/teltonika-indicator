@@ -19,6 +19,8 @@ gnome-extensions prefs teltonika-indicator@mstiefenhofer
 ```
 
 In den Einstellungen Router-Adresse, Benutzer und Passwort eintragen und „Testen“ klicken.
+Bei einem selbstsignierten Zertifikat (RutOS-Standard) zeigt „Testen“ den SHA-256-Fingerprint
+und pinnt ihn erst nach Bestätigung – vorher wird kein Passwort gesendet und die Erweiterung fragt nichts ab.
 Das Passwort liegt im GNOME-Schlüsselbund. Empfohlen ist ein eigener RutOS-Benutzer mit Leserechten.
 Für die optionalen SIM-Aktionen im Menü (Einstellung „SIM-Aktionen im Menü anbieten“: SIM-Wechsel,
 Standard-SIM, Datenlimit zurücksetzen)
@@ -28,18 +30,23 @@ braucht er zusätzlich Schreibrecht für die mobilen Einstellungen.
 
 - RutOS-REST-API: `POST /api/login` holt ein Token, `GET /api/modems/status` die Werte.
   Das Token wird kurz vor Ablauf oder nach einem 401 erneuert.
-- Selbstsigniertes Zertifikat: Der SHA-256-Fingerprint wird beim ersten Kontakt gepinnt (TOFU).
-  Ändert er sich, wird die Verbindung blockiert, bis er in den Einstellungen gelöscht wird.
+- Immer HTTPS: Eine `http://`-Adresse wird auf `https://` umgestellt, Redirects werden nicht verfolgt.
+- Selbstsigniertes Zertifikat: Der SHA-256-Fingerprint wird nur nach Bestätigung in den Einstellungen gepinnt.
+  Ändert er sich, wird die Verbindung blockiert, bis das neue Zertifikat beim „Testen“ bestätigt wird.
+  Eine neue Router-Adresse löscht den Pin. Zertifikate, denen das System vertraut, brauchen keinen Pin.
 - Ist der Router nicht erreichbar, wird das Abfrageintervall still verlängert (exponentieller Backoff bis 5 min).
-- Bei mehreren Modems wird das erste mit Signal angezeigt.
+  Bei falschem Passwort oder Zertifikatsproblemen hält die Abfrage an (eine Benachrichtigung), bis die
+  Einstellungen geändert werden – so löst sie keine Brute-Force-Sperre des Routers aus.
+- Antworten des Routers sind auf 1 MiB und 30 s je Anfrage begrenzt.
+- Bei mehreren Modems wird das erste mit Signal angezeigt; ein SIM-Wechsel betrifft immer das gewählte Modem.
 - SIM wechseln (Untermenü, nach Bestätigung): `switch_sim` („nächste SIM“), notfalls mehrmals, bis die Ziel-SIM
   aktiv ist – auch über leere Slots hinweg. Die Standard-SIM bleibt unverändert.
 - Die API meldet den Betreiber nur für die aktive SIM. Der zuletzt gesehene Betreiber jeder SIM wird gemerkt
   und in den SIM-Menüs angezeigt, z. B. `SIM 3 (eSIM 1, MEDIONmobile)`. Eine SIM, die noch nie aktiv war, zeigt keinen.
 - Standard-SIM festlegen (eigenes Untermenü): ändert nur die Konfiguration, die aktive Verbindung bleibt.
-- „Beenden“ im Menü deaktiviert die Erweiterung (bleibt auch nach Neuanmeldung aus).
-  Wieder starten über den Starter „Teltonika Indicator“ in der App-Übersicht
-  (führt `gnome-extensions enable …` aus, keine Neuanmeldung nötig).
+- „Erweiterung deaktivieren“ im Menü schaltet die Erweiterung aus (bleibt auch nach Neuanmeldung aus).
+  Wieder einschalten über die App „Erweiterungen“ oder – bei Installation per `make install` – über den
+  Starter „Teltonika Indicator“ in der App-Übersicht (führt `gnome-extensions enable …` aus).
 - Datenlimit (Netzwerk → Mobil → Limits am Router): Das Popup zeigt Verbrauch/Limit der aktiven SIM und den nächsten
   automatischen Reset. In der Leiste erscheint ein Warnsymbol, gelb ab der Warnschwelle (Standard 80 %, einstellbar),
   rot bei ausgeschöpftem Limit, dazu je Stufe einmal eine Benachrichtigung. Das SIM-Wechsel-Menü zeigt den Verbrauch

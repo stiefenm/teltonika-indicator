@@ -18,8 +18,21 @@ eq(P.num('−95 dBm'), -95, 'num unicode minus');
 eq(P.num('12.4'), 12.4, 'num float');
 eq(P.num('N/A'), null, 'num N/A');
 eq(P.normalizeBaseUrl(' 192.168.1.1/ '), 'https://192.168.1.1', 'baseUrl default https');
-eq(P.normalizeBaseUrl('http://r.lan'), 'http://r.lan', 'baseUrl keeps http');
+eq(P.normalizeBaseUrl('http://r.lan'), 'https://r.lan', 'baseUrl http → https');
+eq(P.normalizeBaseUrl('HTTP://192.168.1.1:8080/'), 'https://192.168.1.1:8080', 'baseUrl http with port → https');
+eq(P.normalizeBaseUrl('http://127.0.0.1:18080'), 'http://127.0.0.1:18080', 'baseUrl keeps http on loopback');
+eq(P.normalizeBaseUrl('http://127.0.0.1.evil.example'), 'https://127.0.0.1.evil.example', 'baseUrl loopback lookalike');
 eq(P.normalizeBaseUrl(''), null, 'baseUrl empty');
+
+// Kaputte/bösartige Werte vom Router
+const evil = P.normalizeModem({id: '1', operator: {x: 1}, name: 'A'.repeat(500), conntype: ['LTE'], band: 7});
+eq([evil.operator, evil.name.length, evil.conntype, evil.band], [null, 64, null, '7'], 'normalizeModem rejects non-text');
+eq(P.parseDataLimits({data: [{id: 'mob1s1a1', enabled: '1', data_limit: '100', due_reset_time: 1e30},
+    {id: 'mob1s2a1', enabled: '1', data_limit: '100', due_reset_time: '-5'},
+    {id: 'mob1s3a1', enabled: '1', data_limit: '100', due_reset_time: '1767225600'}]}).map(l => l.due),
+[null, null, 1767225600], 'data limit due plausible');
+eq(P.primaryModem([{id: 'ext', offline: true, netType: null}, {id: 'int', offline: false, netType: null}]).id, 'int',
+    'primaryModem skips offline');
 
 for (const [inp, out] of [['LTE B3', 'B3'], ['LTE_B20', 'B20'], ['B7', 'B7'], ['LTE BAND 1', 'B1'],
     ['5G N78', 'n78'], ['NR5G BAND 78', 'n78'], ['n28', 'n28'], ['WCDMA 2100', 'WCDMA 2100']])

@@ -15,7 +15,7 @@ import {RouterClient} from './lib/client.js';
 import {lookupPassword} from './lib/secret.js';
 import {
     dataLimitFor, dataLimitLevel, dataLimitPercent, formatBytes, formatDataLimit, formatLabel, formatMetric, isActiveSim,
-    primaryModem, signalQuality, simKey, simLabel,
+    normalizeBaseUrl, primaryModem, signalQuality, simKey, simLabel,
 } from './lib/parse.js';
 
 const MAX_BACKOFF_S = 300;
@@ -36,10 +36,18 @@ const ICON_OFFLINE = 'network-cellular-offline-symbolic';
 const ICON_ACQUIRING = 'network-cellular-acquiring-symbolic';
 const LIMIT_CLASSES = ['', 'teltonika-limit-warn', 'teltonika-limit-full'];
 
+// Diese Fehler halten die Abfrage an, bis sich die Einstellungen ändern. 'auth' auch, damit
+// wiederholte Fehlversuche nicht die Brute-Force-Sperre des Routers auslösen.
+const STOP_KINDS = ['config', 'auth', 'untrusted', 'cert'];
+// Ohne diese Daten läuft die Statusanzeige weiter (ältere Firmware, fehlendes Leserecht)
+const OPTIONAL_KINDS = ['forbidden', 'http', 'parse'];
+
 const STATUS_TEXT = {
     config: 'Nicht konfiguriert',
+    password: 'Kein Passwort verfügbar',
     auth: 'Anmeldung fehlgeschlagen',
     forbidden: 'Fehlende Berechtigung',
+    untrusted: 'Zertifikat nicht bestätigt – in den Einstellungen „Testen“',
     cert: 'Zertifikat geändert – Verbindung blockiert',
     network: 'Router nicht erreichbar',
     http: 'Fehler vom Router',
@@ -102,11 +110,17 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._failures = 0;
         this._busy = false;
         this._modem = null;
+        this._modems = [];
         this._simCards = [];
         this._dataLimits = [];
         this._activeLimit = null;
         this._limitNotified = {}; // Interface → zuletzt gemeldete Stufe (1 = Warnung, 2 = ausgeschöpft)
-        this._switching = null; // {target, hops, maxHops, lastKey, hopStarted} während eines SIM-Wechsels
+        this._switching = null; // {modemId, target, hops, maxHops, lastKey, hopStarted} während eines SIM-Wechsels
+        this._refreshPending = false; // Abfrage angefordert, während eine lief
+        this._lastError = ''; // zuletzt geloggter Fehler, gegen Log-Spam
+        this._warned = new Set(); // einmal geloggte Warnungen optionaler Endpunkte
+        this._dialog = null;
+        this._idleId = 0;
         this._cancellable = new Gio.Cancellable();
 
         const box = new St.BoxLayout({style_class: 'panel-status-menu-box'});
@@ -129,12 +143,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
         this._buildMenu();
 
-        this._settingsIds = ['host', 'username'].map(k =>
+        this._settingsIds = ['host', 'username', 'cert-fingerprint', 'password-serial'].map(k =>
             this._settings.connect(`changed::${k}`, () => this._onConnectionSettingsChanged()));
-        this._settingsIds.push(this._settings.connect('changed::cert-fingerprint', () => {
-            if (!this._ignoreFpChange)
-                this._onConnectionSettingsChanged();
-        }));
         this._settingsIds.push(this._settings.connect('changed::refresh-interval', () => this._reschedule(0)));
         for (const k of ['allow-sim-switch', 'hidden-sim-slots'])
             this._settingsIds.push(this._settings.connect(`changed::${k}`, () => this._reschedule(0)));
@@ -171,15 +181,19 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._clearLimitItem = this.menu.addAction('Datenlimit zurücksetzen …', () => this._confirmClearLimit());
         this._clearLimitItem.visible = false;
         this.menu.addAction('Router-Weboberfläche öffnen', () => {
-            if (this._client?.baseUrl)
-                Gio.AppInfo.launch_default_for_uri(this._client.baseUrl, null);
+            const url = normalizeBaseUrl(this._settings.get_string('host'));
+            if (url)
+                Gio.AppInfo.launch_default_for_uri(url, null);
         });
         this.menu.addAction('Einstellungen', () => this._ext.openPreferences());
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        // Deaktiviert die Erweiterung (bleibt über Neuanmeldungen aus);
-        // Neustart über den Starter „Teltonika Indicator“ (gnome-extensions enable)
-        this.menu.addAction('Beenden', () => {
-            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+        // Deaktiviert die Erweiterung (bleibt über Neuanmeldungen aus); wieder einschalten über
+        // die Erweiterungen-App oder den Starter „Teltonika Indicator“ (gnome-extensions enable)
+        this.menu.addAction('Erweiterung deaktivieren', () => {
+            if (this._idleId)
+                return;
+            this._idleId = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                this._idleId = 0;
                 Main.extensionManager.disableExtension(this._ext.uuid);
                 return GLib.SOURCE_REMOVE;
             });
@@ -192,6 +206,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._client?.destroy();
         this._client = null;
         this._failures = 0;
+        this._lastError = '';
         this._reschedule(0);
     }
 
@@ -200,15 +215,9 @@ class TeltonikaIndicator extends PanelMenu.Button {
             this._client = new RouterClient({
                 host: this._settings.get_string('host'),
                 username: this._settings.get_string('username'),
+                // Gepinnt wird nur in den Einstellungen nach Bestätigung, nie hier im Hintergrund
                 fingerprint: this._settings.get_string('cert-fingerprint'),
                 getPassword: () => lookupPassword(this._cancellable),
-                onFingerprint: fp => {
-                    // TOFU: erster Kontakt – Fingerprint dauerhaft pinnen.
-                    // Kein Client-Neubau nötig, der aktuelle kennt ihn bereits.
-                    this._ignoreFpChange = true;
-                    this._settings.set_string('cert-fingerprint', fp);
-                    this._ignoreFpChange = false;
-                },
             });
         }
         return this._client;
@@ -227,9 +236,13 @@ class TeltonikaIndicator extends PanelMenu.Button {
     }
 
     async _refresh() {
-        if (this._busy)
+        if (this._busy) {
+            // z. B. Einstellungen geändert, während eine Abfrage lief: danach sofort neu
+            this._refreshPending = true;
             return;
+        }
         this._busy = true;
+        this._refreshPending = false;
         const interval = this._settings.get_int('refresh-interval');
         let next = interval;
         try {
@@ -242,6 +255,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
             if (this._cancellable.is_cancelled())
                 return;
             this._failures = 0;
+            this._lastError = '';
+            this._modems = modems;
             this._modem = primaryModem(modems);
             this._lastUpdate = GLib.DateTime.new_now_local();
             this._updateLabel();
@@ -249,13 +264,16 @@ class TeltonikaIndicator extends PanelMenu.Button {
             if (this._switching)
                 next = SIM_SWITCH_POLL_S;
         } catch (e) {
-            if (e.kind === 'cancelled' || this._cancellable.is_cancelled())
+            if (this._cancellable.is_cancelled())
                 return;
-            next = this._handleError(e, interval);
+            // 'cancelled' ohne destroy(): Client wurde wegen geänderter Einstellungen ersetzt
+            next = e.kind === 'cancelled' ? 0 : this._handleError(e, interval);
         } finally {
             this._busy = false;
         }
-        if (next > 0)
+        if (this._refreshPending)
+            this._reschedule(0);
+        else if (next > 0)
             this._reschedule(next);
     }
 
@@ -267,10 +285,10 @@ class TeltonikaIndicator extends PanelMenu.Button {
                 c.operator = operators[simKey(c.position, c.esimProfile)] ?? null;
             return cards;
         } catch (e) {
-            if (e.kind === 'cancelled')
+            if (!OPTIONAL_KINDS.includes(e.kind))
                 throw e;
             // SIM-Liste ist optional – Statusanzeige soll daran nicht scheitern
-            console.warn(`teltonika-indicator: sim_cards/status: ${e.message}`);
+            this._warnOnce(`sim_cards/status: ${e.message}`);
             return [];
         }
     }
@@ -279,12 +297,18 @@ class TeltonikaIndicator extends PanelMenu.Button {
         try {
             return await client.getDataLimits(this._cancellable);
         } catch (e) {
-            if (e.kind === 'cancelled')
+            if (!OPTIONAL_KINDS.includes(e.kind))
                 throw e;
-            // Datenlimit ist optional (ältere Firmware, fehlendes Leserecht)
-            console.warn(`teltonika-indicator: data_limit/status: ${e.message}`);
+            this._warnOnce(`data_limit/status: ${e.message}`);
             return [];
         }
+    }
+
+    _warnOnce(message) {
+        if (this._warned.has(message))
+            return;
+        this._warned.add(message);
+        console.warn(`teltonika-indicator: ${message}`);
     }
 
     // Liefert die nächste Wartezeit; 0 = Polling anhalten bis Einstellungen sich ändern
@@ -294,6 +318,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
         if (this._switching && now() - this._switching.hopStarted > SIM_HOP_TIMEOUT_S)
             this._finishSwitch('SIM-Wechsel nicht bestätigt – Router nicht erreichbar');
         this._modem = null;
+        this._modems = [];
         this._icon.icon_name = ICON_OFFLINE;
         this._setQualityClass(-1);
         this._label.text = kind === 'network' ? '' : '!';
@@ -303,11 +328,21 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._updateSimItem();
         this._updateDataLimit();
 
-        if (kind === 'config' || kind === 'cert')
+        // Jeden Fehler nur einmal loggen bzw. melden, nicht bei jedem Backoff-Schritt
+        const errorKey = `${kind}: ${e.message}`;
+        const isNew = errorKey !== this._lastError;
+        this._lastError = errorKey;
+        if (isNew && kind !== 'network' && kind !== 'http')
+            console.warn(`teltonika-indicator: ${errorKey}`);
+        if (STOP_KINDS.includes(kind)) {
+            if (isNew && kind !== 'config')
+                Main.notify('Teltonika Router', `${STATUS_TEXT[kind]}\n${e.message}`);
             return 0;
-        if (kind !== 'network' && kind !== 'http')
-            console.warn(`teltonika-indicator: ${kind}: ${e.message}`);
-        // Leiser exponentieller Backoff (Laptop nicht im LAN etc.)
+        }
+        // Während eines SIM-Wechsels weiter dicht abfragen, das Modem startet ggf. neu
+        if (this._switching)
+            return SIM_SWITCH_POLL_S;
+        // Leiser exponentieller Backoff (Laptop nicht im LAN, Schlüsselbund noch gesperrt etc.)
         return Math.min(interval * 2 ** Math.min(this._failures - 1, 6), MAX_BACKOFF_S);
     }
 
@@ -346,7 +381,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
         const time = this._lastUpdate?.format('%H:%M:%S') ?? '';
         this._setStatus(`${m.name || 'Modem'} · Stand ${time}`);
         if (this._switching)
-            this._advanceSwitch(m);
+            this._advanceSwitch();
         else
             this._rememberOperator(m);
         this._updateSimItem();
@@ -471,30 +506,45 @@ class TeltonikaIndicator extends PanelMenu.Button {
             item.menu.addAction(label(card), () => action(card));
     }
 
+    // Schreibende Aktionen: Enter/Escape brechen ab, bestätigt wird nur per Klick auf okLabel
     _confirm(title, description, okLabel, onOk) {
+        this._dialog?.close();
         const dialog = new ModalDialog.ModalDialog({styleClass: 'teltonika-dialog'});
         dialog.contentLayout.add_child(new Dialog.MessageDialogContent({title, description}));
-        dialog.addButton({label: 'Abbrechen', action: () => dialog.close(), key: Clutter.KEY_Escape});
+        dialog.addButton({label: 'Abbrechen', action: () => dialog.close(), key: Clutter.KEY_Escape, default: true});
         dialog.addButton({
             label: okLabel,
-            default: true,
             action: () => {
                 dialog.close();
                 onOk();
             },
         });
+        dialog.connect('closed', () => {
+            if (this._dialog === dialog)
+                this._dialog = null;
+        });
+        this._dialog = dialog;
         dialog.open();
     }
 
+    _modemById(id) {
+        return this._modems.find(m => m.id === id) ?? null;
+    }
+
     _confirmSimSwitch(card) {
-        const m = this._modem;
-        if (!m || this._switching)
+        const id = this._modem?.id;
+        if (id === undefined || this._switching)
             return;
         this._confirm(`Zu ${simLabel(card)} wechseln?`,
             'Der Router schaltet zur nächsten SIM, notfalls mehrmals, bis ' +
             `${simLabel(card)} aktiv ist. Die Mobilfunkverbindung ist dabei für einige ` +
             'Sekunden bis wenige Minuten unterbrochen. Die Standard-SIM bleibt unverändert.',
-            'Wechseln', () => this._switchSim(m, card));
+            'Wechseln', () => {
+                // Aktueller Stand, nicht der beim Öffnen des Dialogs
+                const m = this._modemById(id);
+                if (m && !this._switching)
+                    this._switchSim(m, card);
+            });
     }
 
     _confirmDefaultSim(card) {
@@ -554,19 +604,21 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
     async _switchSim(m, card) {
         const maxHops = this._simCards.filter(c => !c.modem || c.modem === m.id).length || 2;
-        this._switching = {target: card, hops: 0, maxHops, lastKey: this._simKeyOf(m), hopStarted: now()};
+        this._switching = {
+            modemId: m.id, target: card, hops: 0, maxHops, lastKey: this._simKeyOf(m), hopStarted: now(),
+        };
         this._updateSimItem();
         this._setStatus(`Wechsle zu ${simLabel(card)} …`);
-        await this._hop(m);
+        await this._hop();
     }
 
     // Ein Schritt: POST switch_sim (Router wechselt zur nächsten SIM)
-    async _hop(m) {
+    async _hop() {
         const s = this._switching;
         s.hops++;
         s.hopStarted = now();
         try {
-            await this._ensureClient().switchSim(m.id, this._cancellable);
+            await this._ensureClient().switchSim(s.modemId, this._cancellable);
         } catch (e) {
             if (!this._cancellable.is_cancelled())
                 this._finishSwitch(`SIM-Wechsel fehlgeschlagen: ${e.message}${this._rightsHint(e)}`);
@@ -575,10 +627,17 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._reschedule(SIM_SWITCH_POLL_S);
     }
 
-    // Bei jeder Abfrage während des Wechsels: fertig, weiterschalten oder abbrechen
-    _advanceSwitch(m) {
+    // Bei jeder Abfrage während des Wechsels: fertig, weiterschalten oder abbrechen.
+    // Immer das Modem, das gewechselt wird – nicht das gerade angezeigte (mehrere Modems).
+    _advanceSwitch() {
         const s = this._switching;
         const {target} = s;
+        const m = this._modemById(s.modemId);
+        if (!m) {
+            if (now() - s.hopStarted > SIM_HOP_TIMEOUT_S)
+                this._finishSwitch('SIM-Wechsel nicht bestätigt – Modem wird nicht mehr gemeldet');
+            return;
+        }
         if (isActiveSim(m, target)) {
             if (m.netType)
                 this._finishSwitch(`${simLabel(target)} ist aktiv (${formatLabel(m)})`);
@@ -597,7 +656,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
                 return;
             }
             this._setStatus(`Bei ${this._activeSimText(m)} gelandet, schalte weiter …`);
-            this._hop(m);
+            this._hop();
             return;
         }
         if (now() - s.hopStarted > SIM_HOP_TIMEOUT_S) {
@@ -615,9 +674,15 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
     destroy() {
         this._cancellable.cancel();
+        this._dialog?.close();
+        this._dialog = null;
         if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);
             this._timeoutId = 0;
+        }
+        if (this._idleId) {
+            GLib.source_remove(this._idleId);
+            this._idleId = 0;
         }
         for (const id of this._settingsIds)
             this._settings.disconnect(id);

@@ -5,7 +5,7 @@
     <key name="host" type="s">
       <default>''</default>
       <summary>Router-Adresse</summary>
-      <description>z. B. 192.168.1.1 oder https://router.lan – ohne Schema wird HTTPS verwendet.</description>
+      <description>z. B. 192.168.1.1 oder router.lan – es wird immer HTTPS verwendet (http:// nur für localhost).</description>
     </key>
     <key name="username" type="s">
       <default>'admin'</default>
@@ -18,7 +18,13 @@
     </key>
     <key name="cert-fingerprint" type="s">
       <default>''</default>
-      <summary>Gepinnter SHA-256-Fingerprint des Router-Zertifikats (TOFU)</summary>
+      <summary>Gepinnter SHA-256-Fingerprint des Router-Zertifikats</summary>
+      <description>Wird in den Einstellungen nach Bestätigung gesetzt („Testen“). Nur für Zertifikate nötig, denen das System nicht vertraut (selbstsigniert).</description>
+    </key>
+    <key name="password-serial" type="u">
+      <default>0</default>
+      <summary>Zähler, den die Einstellungen nach dem Speichern des Passworts erhöhen</summary>
+      <description>Der Schlüsselbund meldet keine Änderungen – so startet die Erweiterung die Abfrage neu.</description>
     </key>
     <key name="allow-sim-switch" type="b">
       <default>false</default>

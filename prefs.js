@@ -22,15 +22,22 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         window._settings = settings;
         window.set_default_size(620, 760);
 
+        // Laufende Router-Abfragen beim Schließen abbrechen
+        const cancellable = new Gio.Cancellable();
+        window.connect('close-request', () => {
+            cancellable.cancel();
+            return false;
+        });
+
         const page = new Adw.PreferencesPage({icon_name: 'network-cellular-symbolic'});
         window.add(page);
 
-        page.add(this._routerGroup(settings));
+        page.add(this._routerGroup(settings, window, cancellable));
         page.add(this._certGroup(settings));
         page.add(this._displayGroup(settings));
     }
 
-    _routerGroup(settings) {
+    _routerGroup(settings, window, cancellable) {
         const group = new Adw.PreferencesGroup({
             title: 'Router',
             description: 'RutOS 7.x REST-API. Empfohlen: eigener Benutzer mit Leserechten ' +
@@ -39,7 +46,7 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
 
         const host = new Adw.EntryRow({title: 'Adresse (z. B. 192.168.1.1)', show_apply_button: true});
         host.text = settings.get_string('host');
-        host.connect('apply', () => settings.set_string('host', host.text.trim()));
+        host.connect('apply', () => this._setHost(settings, host.text));
         group.add(host);
 
         const user = new Adw.EntryRow({title: 'Benutzername', show_apply_button: true});
@@ -56,6 +63,7 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
             // Die Extension liest das Passwort bei jedem Login neu aus dem Schlüsselbund
             this._passwordPromise = null;
             storePassword(pass.text)
+                .then(() => this._passwordStored(settings))
                 .catch(e => this._toast(group, `Speichern fehlgeschlagen: ${e.message}`));
         });
         group.add(pass);
@@ -76,36 +84,31 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         settings.bind('allow-sim-switch', sim, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(sim);
 
-        group.add(this._simSlotsRow(settings));
+        group.add(this._simSlotsRow(settings, cancellable));
 
-        const test = new Adw.ActionRow({title: 'Verbindung testen', subtitle: 'Übernimmt zuerst offene Eingaben'});
+        // use_markup aus: Betreiber und Fehlertexte kommen vom Router
+        const test = new Adw.ActionRow({
+            title: 'Verbindung testen', subtitle: 'Übernimmt zuerst offene Eingaben', use_markup: false,
+        });
         const btn = new Gtk.Button({label: 'Testen', valign: Gtk.Align.CENTER});
         btn.connect('clicked', async () => {
             // Nicht übernommene Eingaben gelten für den Test mit
-            settings.set_string('host', host.text.trim());
+            this._setHost(settings, host.text);
             settings.set_string('username', user.text.trim());
-            if (pass.text)
-                await storePassword(pass.text).catch(() => {});
+            if (pass.text) {
+                await storePassword(pass.text).then(() => this._passwordStored(settings)).catch(() => {});
+            }
             btn.sensitive = false;
             test.subtitle = 'Verbinde …';
-            const client = new RouterClient({
-                host: host.text,
-                username: user.text.trim(),
-                getPassword: async () => pass.text || this._lookup(),
-                fingerprint: settings.get_string('cert-fingerprint'),
-                onFingerprint: fp => settings.set_string('cert-fingerprint', fp),
-            });
             try {
-                const m = primaryModem(await client.getModems());
-                test.subtitle = m
-                    ? `OK – ${[m.operator, formatLabel(m)].filter(Boolean).join(' · ')}`
-                    : 'OK – aber kein Modem gemeldet';
+                test.subtitle = await this._testConnection(settings, window, cancellable,
+                    async () => pass.text || this._lookup());
             } catch (e) {
+                if (e.kind === 'cancelled')
+                    return;
                 test.subtitle = `Fehler (${e.kind ?? 'unbekannt'}): ${e.message}`;
-            } finally {
-                client.destroy();
-                btn.sensitive = true;
             }
+            btn.sensitive = true;
         });
         test.add_suffix(btn);
         group.add(test);
@@ -113,8 +116,72 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         return group;
     }
 
+    // Verbindungstest; ein unbekanntes oder geändertes Zertifikat wird erst nach Bestätigung gepinnt.
+    // Ohne Pin bricht der TLS-Handshake ab, bevor das Passwort gesendet wird.
+    async _testConnection(settings, window, cancellable, getPassword) {
+        for (;;) {
+            const client = new RouterClient({
+                host: settings.get_string('host'),
+                username: settings.get_string('username'),
+                getPassword,
+                fingerprint: settings.get_string('cert-fingerprint'),
+            });
+            try {
+                const m = primaryModem(await client.getModems(cancellable));
+                return m
+                    ? `OK – ${[m.operator, formatLabel(m)].filter(Boolean).join(' · ')}`
+                    : 'OK – aber kein Modem gemeldet';
+            } catch (e) {
+                if ((e.kind !== 'untrusted' && e.kind !== 'cert') || cancellable.is_cancelled())
+                    throw e;
+                if (!await this._confirmCertificate(window, settings.get_string('host'), e.fingerprint, e.kind === 'cert'))
+                    return 'Abgebrochen – Zertifikat nicht bestätigt';
+                settings.set_string('cert-fingerprint', e.fingerprint);
+            } finally {
+                client.destroy();
+            }
+        }
+    }
+
+    _confirmCertificate(window, host, fingerprint, changed) {
+        const dialog = new Adw.AlertDialog({
+            heading: changed ? 'Zertifikat hat sich geändert' : 'Zertifikat bestätigen',
+            body: `${changed
+                ? 'Der Router meldet ein anderes Zertifikat als bisher. Das ist nach einem Firmware-Update ' +
+                  'oder Zurücksetzen normal, kann aber auch ein Angriff im Netz sein.'
+                : 'Das Zertifikat des Routers ist selbstsigniert. Vertraue ihm nur, wenn der Fingerprint stimmt.'}\n\n` +
+                `SHA-256:\n${fingerprint}\n\n` +
+                'Zum Vergleich, auf einem sicheren Weg (z. B. per Kabel):\n' +
+                `openssl s_client -connect ${host}:443 </dev/null | openssl x509 -noout -fingerprint -sha256`,
+            close_response: 'cancel',
+            default_response: 'cancel',
+        });
+        dialog.add_response('cancel', 'Abbrechen');
+        dialog.add_response('trust', 'Vertrauen');
+        dialog.set_response_appearance('trust', changed ? Adw.ResponseAppearance.DESTRUCTIVE
+            : Adw.ResponseAppearance.SUGGESTED);
+        return new Promise(resolve => {
+            dialog.connect('response', (_d, response) => resolve(response === 'trust'));
+            dialog.present(window);
+        });
+    }
+
+    // Neue Adresse → alter Pin gilt nicht mehr
+    _setHost(settings, text) {
+        const host = text.trim();
+        if (host === settings.get_string('host'))
+            return;
+        settings.set_string('host', host);
+        settings.set_string('cert-fingerprint', '');
+    }
+
+    // Die Extension bemerkt Änderungen im Schlüsselbund nicht – Zähler anstoßen
+    _passwordStored(settings) {
+        settings.set_uint('password-serial', settings.get_uint('password-serial') + 1);
+    }
+
     // Ein Schalter pro SIM-Slot; Slots kommen vom Router, sonst 1–3 als Ersatz
-    _simSlotsRow(settings) {
+    _simSlotsRow(settings, cancellable) {
         const row = new Adw.ExpanderRow({
             title: 'SIM-Slots im Menü',
             subtitle: 'Leere Slots ausschalten – der Router meldet nicht, ob ein Slot belegt ist',
@@ -139,7 +206,7 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
             rows = slots.map(({position, esimProfile = null, title}) => {
                 const op = operators[`${position}/${esimProfile ?? ''}`];
                 const sw = new Adw.SwitchRow({
-                    title, subtitle: op ? `Zuletzt: ${op}` : '', active: !hidden().includes(position),
+                    title, subtitle: op ? `Zuletzt: ${op}` : '', active: !hidden().includes(position), use_markup: false,
                 });
                 sw.connect('notify::active', () => setHidden(position, !sw.active));
                 row.add_row(sw);
@@ -157,9 +224,9 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
                 username: settings.get_string('username'),
                 getPassword: () => this._lookup(),
                 fingerprint: settings.get_string('cert-fingerprint'),
-                onFingerprint: fp => settings.set_string('cert-fingerprint', fp),
             });
-            client.getSimCards().then(cards => {
+            // Ohne bestätigtes Zertifikat schlägt das fehl → Ersatz-Slots bleiben
+            client.getSimCards(cancellable).then(cards => {
                 if (!cards.length)
                     return;
                 // Ein Slot kann mehrere eSIM-Profile haben → pro Position eine Zeile
@@ -170,7 +237,10 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
                 }
                 build([...byPos.values()].sort((x, y) => x.position - y.position)
                     .map(c => ({position: c.position, esimProfile: c.esimProfile, title: c.esimProfile ? `SIM ${c.position} (eSIM)` : `SIM ${c.position}`})));
-            }).catch(e => console.warn(`SIM-Slots laden: ${e.message}`))
+            }).catch(e => {
+                if (e.kind !== 'cancelled' && e.kind !== 'untrusted')
+                    console.warn(`SIM-Slots laden: ${e.message}`);
+            })
                 .finally(() => client.destroy());
         }
         return row;
@@ -179,8 +249,8 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
     _certGroup(settings) {
         const group = new Adw.PreferencesGroup({
             title: 'Zertifikat',
-            description: 'Selbstsignierte Zertifikate werden beim ersten Verbinden gepinnt (Trust on First Use). ' +
-                'Ändert sich das Zertifikat, wird die Verbindung blockiert.',
+            description: 'Selbstsignierte Zertifikate werden beim „Testen“ nach Bestätigung gepinnt. ' +
+                'Ändert sich das Zertifikat, wird die Verbindung blockiert, bis es erneut bestätigt wird.',
         });
         const row = new Adw.ActionRow({title: 'SHA-256-Fingerprint', subtitle_selectable: true});
         row.add_css_class('property');
@@ -246,6 +316,6 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
     }
 
     _toast(widget, title) {
-        widget.get_root()?.add_toast?.(new Adw.Toast({title}));
+        widget.get_root()?.add_toast?.(new Adw.Toast({title, use_markup: false}));
     }
 }

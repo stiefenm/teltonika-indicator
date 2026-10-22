@@ -4,9 +4,10 @@
 Endpunkte: POST /api/login, GET /api/modems/status, GET /api/sim_cards/status,
 PUT /api/sim_cards/config/{id}, POST /api/modems/{id}/actions/{switch_sim,restart_connection},
 GET /api/data_limit/status, GET /api/interfaces/config, POST /api/data_limit/actions/clear,
-POST /_test/expire (alle Tokens ungültig), POST /_test/fixture?name=…
+POST /_test/expire (alle Tokens ungültig), POST /_test/fixture?name=…,
+GET /_test/logins (Anzahl Login-Versuche), GET /api/_test/{big,slow,redirect} (Robustheit des Clients)
 """
-import json, secrets, ssl, sys
+import json, secrets, ssl, sys, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
@@ -15,7 +16,7 @@ FIX = Path(__file__).parent / "fixtures"
 # Benutzer → darf schreiben (SIM-Wechsel)?
 USERS = {"monitor": ("secret", True), "readonly": ("secret", False)}
 tokens = {}  # token → Benutzer
-state = {"fixture": "modems_status.json", "active": {}}  # modem → (slot, esim_profile)
+state = {"fixture": "modems_status.json", "active": {}, "logins": 0}  # modem → (slot, esim_profile)
 sim_cards = json.loads((FIX / "rutm30_sim_cards_status.json").read_text())["data"]
 data_limits = json.loads((FIX / "rutm30_data_limit_status.json").read_text())["data"]
 interfaces = json.loads((FIX / "rutm30_interfaces_config.json").read_text())["data"]
@@ -38,12 +39,16 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.wfile.write(body)
+        except OSError:  # Client bricht ab, z. B. bei zu großer Antwort
+            pass
 
     def do_POST(self):
         u = urlparse(self.path)
         data = self.rfile.read(int(self.headers.get("Content-Length") or 0))
         if u.path == "/api/login":
+            state["logins"] += 1
             try:
                 req = json.loads(data)
             except ValueError:
@@ -124,6 +129,29 @@ class H(BaseHTTPRequestHandler):
         return tokens.get(auth[7:]) if auth.startswith("Bearer ") else None
 
     def do_GET(self):
+        if self.path == "/_test/logins":
+            return self.reply(200, {"logins": state["logins"]})
+        if self.path == "/api/_test/big":
+            return self.reply(200, {"success": True, "data": "x" * (2 * 1024 * 1024)})
+        if self.path == "/api/_test/redirect":
+            self.send_response(302)
+            self.send_header("Location", "http://127.0.0.1:1/api/modems/status")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if self.path == "/api/_test/slow":
+            # Ohne Content-Length, alle 0,5 s ein Byte – nie ein I/O-Timeout, aber endlos
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            try:
+                for _ in range(20):
+                    self.wfile.write(b" ")
+                    self.wfile.flush()
+                    time.sleep(0.5)
+            except OSError:
+                pass
+            return
         if not self.user():
             return self.reply(401, {"success": False, "errors": [{"code": 120, "error": "Unauthorized access"}]})
         if self.path == "/api/modems/status":

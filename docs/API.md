@@ -81,4 +81,4 @@ So macht es die WebUI (aus `/assets/app.mobile.app-*.js`, Firmware RUTM_R_00.07.
 ## HTTPS
 
 HTTP (80) und HTTPS (443) sind im LAN standardmäßig an, „Redirect to HTTPS“ ist aktiv.
-Das Zertifikat ist selbstsigniert (`uhttpd.crt`), deshalb TOFU-Pinning.
+Das Zertifikat ist selbstsigniert (`uhttpd.crt`), deshalb Pinning des Fingerprints – nach Bestätigung in den Einstellungen, nicht still beim ersten Kontakt.

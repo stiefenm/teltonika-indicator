@@ -1,10 +1,13 @@
 // gjs -m test/client-test.js BASEURL [EXPECT_FINGERPRINT]
 // Läuft gegen test/mock_router.py (siehe test/run.sh).
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Soup from 'gi://Soup?version=3.0';
 import System from 'system';
 import {RouterClient} from '../lib/client.js';
 import {isActiveSim} from '../lib/parse.js';
+
+Gio._promisify(Soup.Session.prototype, 'send_and_read_async');
 
 const [base, expectFp] = ARGV;
 let failed = 0;
@@ -14,11 +17,24 @@ const check = (cond, what, extra = '') => {
     print(`${cond ? 'ok  ' : 'FAIL'} ${what} ${cond ? '' : extra}`);
 };
 
-async function post(path) {
+async function send(method, path) {
     const s = new Soup.Session();
-    const msg = Soup.Message.new('POST', `${base}${path}`);
+    const msg = Soup.Message.new(method, `${base}${path}`);
     msg.connect('accept-certificate', () => true);
-    await s.send_and_read_async(msg, GLib.PRIORITY_DEFAULT, null);
+    const bytes = await s.send_and_read_async(msg, GLib.PRIORITY_DEFAULT, null);
+    return JSON.parse(new TextDecoder().decode(bytes.get_data()));
+}
+const post = path => send('POST', path);
+
+async function expectError(promise, kind, what) {
+    try {
+        await promise;
+        check(false, what, 'no error');
+    } catch (e) {
+        check(e.kind === kind, what, `${e.kind} ${e.message}`);
+        return e;
+    }
+    return null;
 }
 
 async function main() {
@@ -35,26 +51,39 @@ async function main() {
         } catch (e) {
             check(e.kind === 'cert' && e.fingerprint === expectFp, 'pin mismatch → cert', `${e.kind} ${e.message}`);
         }
+
+        // Unbekanntes Zertifikat: abgelehnt, bevor das Passwort gesendet wird
+        const unknown = new RouterClient({host: base, username: 'monitor', getPassword: async () => 'secret'});
+        const e = await expectError(unknown.getModems(), 'untrusted', 'unpinned cert → untrusted');
+        check(e?.fingerprint === expectFp, 'untrusted reports fingerprint', e?.fingerprint);
+        // Erst jetzt eine akzeptierte Verbindung (frischer Mock: bisher kein Login)
+        check((await send('GET', '/_test/logins')).logins === 0, 'no login sent to unpinned host');
     }
 
-    let pinned = '';
     const c = new RouterClient({
-        host: base, username: 'monitor', getPassword: async () => 'secret',
-        onFingerprint: fp => {
-            pinned = fp;
-        },
+        host: base, username: 'monitor', getPassword: async () => 'secret', fingerprint: expectFp ?? '',
     });
     const modems = await c.getModems();
     check(modems[0]?.operator === 'Telekom.de', 'getModems');
-    if (base.startsWith('https'))
-        check(pinned === expectFp, 'TOFU fingerprint pinned', `${pinned} != ${expectFp}`);
 
     await post('/_test/expire');
     const again = await c.getModems();
     check(again.length === 2, 're-login after 401');
+    await expectError(c.get('/_test/big'), 'parse', 'oversized response → parse');
+    await expectError(c.get('/_test/redirect'), 'config', 'redirect not followed → config');
     c.destroy();
 
-    const bad = new RouterClient({host: base, username: 'monitor', getPassword: async () => 'wrong'});
+    const slow = new RouterClient({
+        host: base, username: 'monitor', getPassword: async () => 'secret', fingerprint: expectFp ?? '', maxTime: 2,
+    });
+    await expectError(slow.get('/_test/slow'), 'network', 'slow drip → total timeout');
+    slow.destroy();
+
+    const nopw = new RouterClient({host: base, username: 'monitor', getPassword: async () => null});
+    await expectError(nopw.getModems(), 'password', 'no password → password');
+
+    const fp = expectFp ?? '';
+    const bad = new RouterClient({host: base, username: 'monitor', getPassword: async () => 'wrong', fingerprint: fp});
     try {
         await bad.getModems();
         check(false, 'wrong password rejected');
@@ -62,7 +91,7 @@ async function main() {
         check(e.kind === 'auth', 'wrong password → auth', e.kind);
     }
 
-    const rw = new RouterClient({host: base, username: 'monitor', getPassword: async () => 'secret'});
+    const rw = new RouterClient({host: base, username: 'monitor', getPassword: async () => 'secret', fingerprint: fp});
     const cards = await rw.getSimCards();
     check(cards.length === 3 && cards[2].esimProfile === '1', 'getSimCards', JSON.stringify(cards));
     const esim = cards.find(c => c.position === 3);
@@ -93,7 +122,7 @@ async function main() {
     check((await rw.getDataLimits())[0].used === 0, 'clearDataLimit resets active SIM');
     rw.destroy();
 
-    const ro = new RouterClient({host: base, username: 'readonly', getPassword: async () => 'secret'});
+    const ro = new RouterClient({host: base, username: 'readonly', getPassword: async () => 'secret', fingerprint: fp});
     try {
         await ro.switchSim('2-1');
         check(false, 'read-only switch rejected');
