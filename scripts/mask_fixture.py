@@ -8,6 +8,14 @@ import sys
 KEYS = re.compile(r"^(imei|imsi|iccid|serial|mac|macaddr|bssid|cellid|tac|lac|token|ssid|hostname|"
                   r"device_identifier|wan_ip|public_ip|psk|key|password)$", re.I)
 IP = re.compile(r"^[0-9a-fA-F:.]+(/\d+)?$")
+MAC = re.compile(r"[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}")
+macs = {}
+
+
+def mask_mac(m):
+    # Gleiche MAC → gleicher Platzhalter, verschiedene bleiben unterscheidbar
+    n = macs.setdefault(m.group(0).upper().replace("-", ":"), len(macs) + 1)
+    return f"02:00:00:00:00:{n:02X}"
 
 
 def mask_ip(v):
@@ -23,11 +31,14 @@ def mask_ip(v):
 
 def walk(o, key=""):
     if isinstance(o, dict):
-        return {k: walk(v, k) for k, v in o.items()}
+        # MACs stehen auch als Schlüssel, z. B. in der assoclist der WLAN-Clients
+        return {MAC.sub(mask_mac, k): walk(v, k) for k, v in o.items()}
     if isinstance(o, list):
         return [walk(x, key) for x in o]
     if KEYS.match(key) and isinstance(o, (str, int)) and o not in ("N/A", ""):
         return "XXXX"
+    if isinstance(o, str) and MAC.search(o):
+        return MAC.sub(mask_mac, o)
     if isinstance(o, str) and IP.match(o) and any(c in o for c in ".:"):
         return mask_ip(o)
     return o
