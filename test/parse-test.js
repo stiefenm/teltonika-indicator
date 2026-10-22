@@ -49,6 +49,9 @@ eq([r.operator, r.activeSim, r.simCount, r.temperature], ['MEDIONmobile', 1, 3, 
 const cards = P.parseSimCards(load('rutm30_sim_cards_status.json'));
 eq(cards.map(c => [c.position, c.esimProfile, c.primary]), [[1, null, false], [2, null, false], [3, '1', true]], 'RUTM30 sim cards');
 eq(cards.map(P.simLabel), ['SIM 1', 'SIM 2', 'SIM 3 (eSIM 1)'], 'sim labels');
+eq(P.simLabel({...cards[0], operator: 'Telekom'}), 'SIM 1 (Telekom)', 'sim label operator');
+eq(P.simLabel({...cards[2], operator: 'MEDIONmobile'}), 'SIM 3 (eSIM 1, MEDIONmobile)', 'esim label operator');
+eq([P.simKey(r.activeSim, r.esimProfile), P.simKey(cards[2].position, cards[2].esimProfile)], ['1/', '3/1'], 'sim keys');
 eq(cards.map(c => P.isActiveSim(r, c)), [true, false, false], 'active SIM 1');
 eq(P.isActiveSim({activeSim: 3, esimProfile: '1'}, cards[2]), true, 'active eSIM profile 1');
 eq(P.isActiveSim({activeSim: 3, esimProfile: '2'}, cards[2]), false, 'other eSIM profile');

@@ -33,6 +33,8 @@ braucht er zusätzlich Schreibrecht für die mobilen Einstellungen.
 - Bei mehreren Modems wird das erste mit Signal angezeigt.
 - SIM wechseln (Untermenü, nach Bestätigung): `switch_sim` („nächste SIM“), notfalls mehrmals, bis die Ziel-SIM
   aktiv ist – auch über leere Slots hinweg. Die Standard-SIM bleibt unverändert.
+- Die API meldet den Betreiber nur für die aktive SIM. Der zuletzt gesehene Betreiber jeder SIM wird gemerkt
+  und in den SIM-Menüs angezeigt, z. B. `SIM 3 (eSIM 1, MEDIONmobile)`. Eine SIM, die noch nie aktiv war, zeigt keinen.
 - Standard-SIM festlegen (eigenes Untermenü): ändert nur die Konfiguration, die aktive Verbindung bleibt.
 - „Beenden“ im Menü deaktiviert die Erweiterung (bleibt auch nach Neuanmeldung aus).
   Wieder starten über den Starter „Teltonika Indicator“ in der App-Übersicht

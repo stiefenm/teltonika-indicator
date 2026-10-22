@@ -14,7 +14,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {RouterClient} from './lib/client.js';
 import {lookupPassword} from './lib/secret.js';
 import {
-    formatBytes, formatLabel, formatMetric, isActiveSim, primaryModem, signalQuality, simLabel,
+    formatBytes, formatLabel, formatMetric, isActiveSim, primaryModem, signalQuality, simKey, simLabel,
 } from './lib/parse.js';
 
 const MAX_BACKOFF_S = 300;
@@ -236,7 +236,11 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
     async _fetchSimCards(client) {
         try {
-            return await client.getSimCards(this._cancellable);
+            const cards = await client.getSimCards(this._cancellable);
+            const operators = this._settings.get_value('sim-operators').deepUnpack();
+            for (const c of cards)
+                c.operator = operators[simKey(c.position, c.esimProfile)] ?? null;
+            return cards;
         } catch (e) {
             if (e.kind === 'cancelled')
                 throw e;
@@ -305,6 +309,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._setStatus(`${m.name || 'Modem'} · Stand ${time}`);
         if (this._switching)
             this._advanceSwitch(m);
+        else
+            this._rememberOperator(m);
         this._updateSimItem();
         const r = this._rows;
         r.operator.setValue(m.operator);
@@ -321,12 +327,28 @@ class TeltonikaIndicator extends PanelMenu.Button {
             ? `${formatBytes(m.txBytes)} / ${formatBytes(m.rxBytes)}` : null);
     }
 
+    // Ohne Betreiber – der steht in der Popup-Zeile darüber
     _activeSimText(m) {
         const card = this._simCards.find(c => (!c.modem || c.modem === m.id) && isActiveSim(m, c));
-        if (card)
-            return simLabel(card);
         // modems/status meldet esim_profile, solange eine eSIM aktiv ist
-        return simLabel({position: m.activeSim, esimProfile: m.esimProfile});
+        return simLabel({position: m.activeSim, esimProfile: card ? card.esimProfile : m.esimProfile});
+    }
+
+    // Betreiber der aktiven SIM merken, damit das Wechsel-Menü ihn auch für inaktive SIMs zeigt.
+    // Nur mit Netz und außerhalb eines Wechsels, sonst könnte er noch von der vorigen SIM stammen.
+    _rememberOperator(m) {
+        if (!m.activeSim || !m.operator || !m.netType)
+            return;
+        const key = simKey(m.activeSim, m.esimProfile);
+        const operators = this._settings.get_value('sim-operators').deepUnpack();
+        if (operators[key] === m.operator)
+            return;
+        operators[key] = m.operator;
+        this._settings.set_value('sim-operators', new GLib.Variant('a{ss}', operators));
+        for (const c of this._simCards) {
+            if (simKey(c.position, c.esimProfile) === key)
+                c.operator = m.operator;
+        }
     }
 
     // SIMs dieses Modems ohne ausgeblendete Slots
@@ -362,7 +384,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
     // Untermenü nur neu bauen, wenn sich die Einträge geändert haben
     _fillSubmenu(item, keyProp, cards, label, action) {
-        const key = cards.map(c => c.id).join(',');
+        const key = cards.map(label).join('\n');
         if (key === this[keyProp])
             return;
         this[keyProp] = key;

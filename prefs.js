@@ -134,8 +134,12 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         let rows = [];
         const build = slots => {
             rows.forEach(r => row.remove(r));
-            rows = slots.map(({position, title}) => {
-                const sw = new Adw.SwitchRow({title, active: !hidden().includes(position)});
+            const operators = settings.get_value('sim-operators').deepUnpack();
+            rows = slots.map(({position, esimProfile = null, title}) => {
+                const op = operators[`${position}/${esimProfile ?? ''}`];
+                const sw = new Adw.SwitchRow({
+                    title, subtitle: op ? `Zuletzt: ${op}` : '', active: !hidden().includes(position),
+                });
                 sw.connect('notify::active', () => setHidden(position, !sw.active));
                 row.add_row(sw);
                 return sw;
@@ -164,7 +168,7 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
                         byPos.set(c.position, c);
                 }
                 build([...byPos.values()].sort((x, y) => x.position - y.position)
-                    .map(c => ({position: c.position, title: c.esimProfile ? `SIM ${c.position} (eSIM)` : `SIM ${c.position}`})));
+                    .map(c => ({position: c.position, esimProfile: c.esimProfile, title: c.esimProfile ? `SIM ${c.position} (eSIM)` : `SIM ${c.position}`})));
             }).catch(e => console.warn(`SIM-Slots laden: ${e.message}`))
                 .finally(() => client.destroy());
         }

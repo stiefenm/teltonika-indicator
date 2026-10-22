@@ -30,6 +30,11 @@
       <summary>SIM-Steckplätze, die im Wechsel-Menü nicht angeboten werden</summary>
       <description>Z. B. leere Slots – die API meldet nicht, ob ein Slot belegt ist.</description>
     </key>
+    <key name="sim-operators" type="a{ss}">
+      <default>{}</default>
+      <summary>Zuletzt gesehener Betreiber je SIM</summary>
+      <description>Schlüssel „Slot/eSIM-Profil“ – die API meldet den Betreiber nur für die aktive SIM.</description>
+    </key>
     <key name="show-net-type" type="b">
       <default>true</default>
       <summary>Netztyp im Panel anzeigen</summary>
