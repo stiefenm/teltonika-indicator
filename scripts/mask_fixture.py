@@ -5,17 +5,35 @@ import json
 import re
 import sys
 
-KEYS = re.compile(r"^(imei|imsi|iccid|serial|mac|macaddr|bssid|cellid|tac|lac|token|ssid|hostname|"
-                  r"device_identifier|wan_ip|public_ip|psk|key|password)$", re.I)
+# Schlüssel werden in Teile zerlegt (snake_case, camelCase, Ziffern), damit auch
+# macEth, sim1_boot_iccid oder serial_number erfasst werden
+SENSITIVE = {"imei", "imsi", "iccid", "serial", "mac", "macaddr", "hwaddr", "bssid", "cellid", "tac", "lac",
+             "token", "ssid", "hostname", "identifier", "psk", "key", "password", "passwd", "secret",
+             "lat", "latitude", "lon", "lng", "longitude", "alt", "altitude"}
+SENSITIVE_PAIRS = {("wan", "ip"), ("public", "ip")}
+# Zahlen/Einstellungen zu solchen Feldern sind unkritisch, z. B. bssid_limit
+HARMLESS = {"limit", "count", "num", "max", "min", "len", "length", "enabled", "policy", "type"}
 IP = re.compile(r"^[0-9a-fA-F:.]+(/\d+)?$")
 MAC = re.compile(r"[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}")
+# MAC ohne Trennzeichen, z. B. "macEth": "001122AABBCC" (mind. ein Buchstabe, sonst eher ein Zähler)
+MAC_BARE = re.compile(r"^(?=.*[A-Fa-f])[0-9A-Fa-f]{12}$")
 macs = {}
 
 
-def mask_mac(m):
+def mask_mac(mac):
     # Gleiche MAC → gleicher Platzhalter, verschiedene bleiben unterscheidbar
-    n = macs.setdefault(m.group(0).upper().replace("-", ":"), len(macs) + 1)
+    norm = re.sub(r"[:-]", "", mac).upper()
+    n = macs.setdefault(norm, len(macs) + 1)
     return f"02:00:00:00:00:{n:02X}"
+
+
+def sensitive(key):
+    if "/" in key:  # ACL-Pfade wie /password_policy/config/* oder services/modbus/modbus_serial_client
+        return False
+    parts = [p.lower() for p in re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])", key)]
+    if any(p in HARMLESS for p in parts):
+        return False
+    return any(p in SENSITIVE for p in parts) or any(pair in SENSITIVE_PAIRS for pair in zip(parts, parts[1:]))
 
 
 def mask_ip(v):
@@ -32,13 +50,15 @@ def mask_ip(v):
 def walk(o, key=""):
     if isinstance(o, dict):
         # MACs stehen auch als Schlüssel, z. B. in der assoclist der WLAN-Clients
-        return {MAC.sub(mask_mac, k): walk(v, k) for k, v in o.items()}
+        return {MAC.sub(lambda m: mask_mac(m[0]), k): walk(v, k) for k, v in o.items()}
     if isinstance(o, list):
         return [walk(x, key) for x in o]
-    if KEYS.match(key) and isinstance(o, (str, int)) and o not in ("N/A", ""):
+    if sensitive(key) and isinstance(o, (str, int, float)) and not isinstance(o, bool) and o not in ("N/A", ""):
         return "XXXX"
+    if isinstance(o, str) and MAC_BARE.match(o):
+        return mask_mac(o)
     if isinstance(o, str) and MAC.search(o):
-        return MAC.sub(mask_mac, o)
+        return MAC.sub(lambda m: mask_mac(m[0]), o)
     if isinstance(o, str) and IP.match(o) and any(c in o for c in ".:"):
         return mask_ip(o)
     return o
@@ -48,7 +68,7 @@ def collect(o, found):
     """Werte sensibler Text-Felder sammeln, um sie auch in anderen Feldern zu ersetzen (z. B. 'ap "SSID"')."""
     if isinstance(o, dict):
         for k, v in o.items():
-            if KEYS.match(k) and isinstance(v, str) and len(v) >= 4 and v not in ("N/A", "XXXX"):
+            if sensitive(k) and isinstance(v, str) and len(v) >= 4 and v not in ("N/A", "XXXX"):
                 found.add(v)
             collect(v, found)
     elif isinstance(o, list):
