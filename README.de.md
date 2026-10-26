@@ -21,8 +21,8 @@ Hintergrund: [docs/BRIEF.md](docs/BRIEF.md), API-Notizen: [docs/API.md](docs/API
 make install          # packt und installiert nach ~/.local/share/gnome-shell/extensions,
                       # dazu Starter + Icon nach ~/.local/share/applications bzw. icons
 # Wayland: einmal ab- und wieder anmelden
-gnome-extensions enable teltonika-indicator@mstiefenhofer
-gnome-extensions prefs teltonika-indicator@mstiefenhofer
+gnome-extensions enable teltonika-indicator@stiefenm.github.io
+gnome-extensions prefs teltonika-indicator@stiefenm.github.io
 ```
 
 `make install` braucht `gettext`, um die Übersetzungen zu kompilieren.

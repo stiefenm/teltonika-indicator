@@ -1,4 +1,4 @@
-UUID := teltonika-indicator@mstiefenhofer
+UUID := teltonika-indicator@stiefenm.github.io
 EXTRA := lib
 DATA_HOME ?= $(or $(XDG_DATA_HOME),$(HOME)/.local/share)
 DESKTOP := $(DATA_HOME)/applications/teltonika-indicator.desktop

@@ -1,5 +1,5 @@
 {
-  "uuid": "teltonika-indicator@mstiefenhofer",
+  "uuid": "teltonika-indicator@stiefenm.github.io",
   "name": "Teltonika Router Indicator",
   "description": "Shows the cellular status (network type, band, signal, operator) of a Teltonika router running RutOS 7.x in the top bar. Optional SIM switching, default SIM, data limit reset and router restart.\n\nTranslations: German.",
   "shell-version": [

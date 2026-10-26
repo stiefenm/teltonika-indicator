@@ -21,8 +21,8 @@ API notes: [docs/API.md](docs/API.md) (German).
 make install          # packs and installs to ~/.local/share/gnome-shell/extensions,
                       # plus launcher + icon in ~/.local/share/applications and icons
 # Wayland: log out and back in once
-gnome-extensions enable teltonika-indicator@mstiefenhofer
-gnome-extensions prefs teltonika-indicator@mstiefenhofer
+gnome-extensions enable teltonika-indicator@stiefenm.github.io
+gnome-extensions prefs teltonika-indicator@stiefenm.github.io
 ```
 
 `make install` needs `gettext` to compile the translations.

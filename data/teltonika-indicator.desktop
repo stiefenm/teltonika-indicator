@@ -3,7 +3,7 @@ Type=Application
 Name=Teltonika Indicator
 Comment=Show the cellular status of a Teltonika router in the top bar
 Comment[de]=Mobilfunk-Status des Teltonika-Routers in der oberen Leiste anzeigen
-Exec=gnome-extensions enable teltonika-indicator@mstiefenhofer
+Exec=gnome-extensions enable teltonika-indicator@stiefenm.github.io
 Icon=teltonika-indicator
 Terminal=false
 Categories=Network;Monitor;
@@ -14,4 +14,4 @@ Actions=preferences;
 [Desktop Action preferences]
 Name=Preferences
 Name[de]=Einstellungen
-Exec=gnome-extensions prefs teltonika-indicator@mstiefenhofer
+Exec=gnome-extensions prefs teltonika-indicator@stiefenm.github.io
