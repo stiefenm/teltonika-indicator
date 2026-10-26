@@ -123,6 +123,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._lastError = ''; // zuletzt geloggter Fehler, gegen Log-Spam
         this._warned = new Set(); // einmal geloggte Warnungen optionaler Endpunkte
         this._dialog = null;
+        this._dialogClosedId = 0;
         this._idleId = 0;
         this._cancellable = new Gio.Cancellable();
 
@@ -520,7 +521,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
     // Schreibende Aktionen: Enter/Escape brechen ab, bestätigt wird nur per Klick auf okLabel
     _confirm(title, description, okLabel, onOk) {
-        this._dialog?.close();
+        this._closeDialog();
         const dialog = new ModalDialog.ModalDialog({styleClass: 'teltonika-dialog'});
         dialog.contentLayout.add_child(new Dialog.MessageDialogContent({title, description}));
         dialog.addButton({label: _('Cancel'), action: () => dialog.close(), key: Clutter.KEY_Escape, default: true});
@@ -531,12 +532,22 @@ class TeltonikaIndicator extends PanelMenu.Button {
                 onOk();
             },
         });
-        dialog.connect('closed', () => {
+        this._dialogClosedId = dialog.connect('closed', () => {
             if (this._dialog === dialog)
                 this._dialog = null;
         });
         this._dialog = dialog;
         dialog.open();
+    }
+
+    // Offenen Dialog schließen; Signal vorher trennen (EGO: alle Signale in disable() trennen)
+    _closeDialog() {
+        const dialog = this._dialog;
+        if (!dialog)
+            return;
+        this._dialog = null;
+        dialog.disconnect(this._dialogClosedId);
+        dialog.close();
     }
 
     _modemById(id) {
@@ -721,8 +732,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
 
     destroy() {
         this._cancellable.cancel();
-        this._dialog?.close();
-        this._dialog = null;
+        this._closeDialog();
         if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);
             this._timeoutId = 0;

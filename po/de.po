@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: teltonika-indicator 1.0.0\n"
 "Report-Msgid-Bugs-To: https://github.com/stiefenm/teltonika-indicator/"
 "issues\n"
-"POT-Creation-Date: 2026-10-26 13:25+0100\n"
+"POT-Creation-Date: 2026-10-26 13:46+0100\n"
 "PO-Revision-Date: 2026-10-26 13:12+0100\n"
 "Last-Translator: Marek Stiefenhofer <sti@posteo.de>\n"
 "Language-Team: none\n"
@@ -85,108 +85,108 @@ msgstr "Datenlimit"
 msgid "Limit reset"
 msgstr "Limit-Reset"
 
-#: extension.js:176
+#: extension.js:177
 msgid "Refresh now"
 msgstr "Jetzt aktualisieren"
 
-#: extension.js:177 extension.js:490
+#: extension.js:178 extension.js:491
 msgid "Switch SIM"
 msgstr "SIM wechseln"
 
-#: extension.js:181
+#: extension.js:182
 msgid "Default SIM"
 msgstr "Standard-SIM"
 
-#: extension.js:185
+#: extension.js:186
 msgid "Reset data limit…"
 msgstr "Datenlimit zurücksetzen …"
 
-#: extension.js:187
+#: extension.js:188
 msgid "Restart router…"
 msgstr "Router neu starten …"
 
-#: extension.js:189
+#: extension.js:190
 msgid "Open router web interface"
 msgstr "Router-Weboberfläche öffnen"
 
-#: extension.js:194
+#: extension.js:195
 msgid "Preferences"
 msgstr "Einstellungen"
 
-#: extension.js:198
+#: extension.js:199
 msgid "Disable extension"
 msgstr "Erweiterung deaktivieren"
 
-#: extension.js:208 prefs.js:111
+#: extension.js:209 prefs.js:111
 msgid "Connecting…"
 msgstr "Verbinde …"
 
-#: extension.js:256
+#: extension.js:257
 msgid "Enter the router address in the preferences"
 msgstr "Router-Adresse in den Einstellungen eintragen"
 
-#: extension.js:325
+#: extension.js:326
 msgid "SIM switch not confirmed – router not reachable"
 msgstr "SIM-Wechsel nicht bestätigt – Router nicht erreichbar"
 
-#: extension.js:356
+#: extension.js:357
 msgid "Error"
 msgstr "Fehler"
 
-#: extension.js:388
+#: extension.js:389
 msgid "No modem found"
 msgstr "Kein Modem gefunden"
 
-#: extension.js:392
+#: extension.js:393
 msgid "{modem} · as of {time}"
 msgstr "{modem} · Stand {time}"
 
-#: extension.js:392
+#: extension.js:393
 msgid "Modem"
 msgstr "Modem"
 
 #. Translators: GLib date format for the next automatic limit reset, e.g. “Mon Nov 3, 00:00”
-#: extension.js:427
+#: extension.js:428
 msgid "%a %b %-d, %H:%M"
 msgstr "%a %d.%m. %H:%M"
 
-#: extension.js:444
+#: extension.js:445
 msgid "Data limit of {sim} used up ({usage})"
 msgstr "Datenlimit von {sim} ausgeschöpft ({usage})"
 
-#: extension.js:445
+#: extension.js:446
 msgid "{sim}: data limit almost reached ({usage})"
 msgstr "{sim}: Datenlimit fast erreicht ({usage})"
 
-#: extension.js:490
+#: extension.js:491
 msgid "Switching SIM…"
 msgstr "SIM-Wechsel läuft …"
 
-#: extension.js:493
+#: extension.js:494
 msgid "Switch to {sim}"
 msgstr "Zu {sim} wechseln"
 
-#: extension.js:498
+#: extension.js:499
 msgid "Default SIM: {sim}"
 msgstr "Standard-SIM: {sim}"
 
-#: extension.js:501
+#: extension.js:502
 msgid "Set {sim} as default"
 msgstr "{sim} als Standard festlegen"
 
-#: extension.js:507
+#: extension.js:508
 msgid "limit {percent} %"
 msgstr "Limit {percent} %"
 
-#: extension.js:526 prefs.js:168
+#: extension.js:527 prefs.js:168
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: extension.js:550
+#: extension.js:561
 msgid "Switch to {sim}?"
 msgstr "Zu {sim} wechseln?"
 
-#: extension.js:551
+#: extension.js:562
 msgid ""
 "The router switches to the next SIM, several times if necessary, until {sim} "
 "is active. The mobile connection is interrupted for a few seconds up to a "
@@ -196,15 +196,15 @@ msgstr ""
 "ist. Die Mobilfunkverbindung ist dabei für einige Sekunden bis wenige "
 "Minuten unterbrochen. Die Standard-SIM bleibt unverändert."
 
-#: extension.js:554
+#: extension.js:565
 msgid "Switch"
 msgstr "Wechseln"
 
-#: extension.js:563
+#: extension.js:574
 msgid "Set {sim} as default SIM?"
 msgstr "{sim} als Standard-SIM festlegen?"
 
-#: extension.js:564
+#: extension.js:575
 msgid ""
 "The active connection stays up. The default SIM is used e.g. after a router "
 "restart or when the connection is re-established."
@@ -212,45 +212,45 @@ msgstr ""
 "Die aktive Verbindung bleibt bestehen. Die Standard-SIM wird z. B. nach "
 "einem Neustart des Routers oder einem Verbindungsneuaufbau verwendet."
 
-#: extension.js:566
+#: extension.js:577
 msgid "Set as default"
 msgstr "Festlegen"
 
-#: extension.js:574
+#: extension.js:585
 msgid "Changing the default SIM failed: {error}"
 msgstr "Standard-SIM ändern fehlgeschlagen: {error}"
 
-#: extension.js:580
+#: extension.js:591
 msgid "Default SIM is now {sim}"
 msgstr "Standard-SIM ist jetzt {sim}"
 
-#: extension.js:589
+#: extension.js:600
 msgid "Reset data limit of {sim}?"
 msgstr "Datenlimit von {sim} zurücksetzen?"
 
-#: extension.js:590
+#: extension.js:601
 msgid "The counter ({usage}) is set to 0. This cannot be undone."
 msgstr ""
 "Der Zähler ({usage}) wird auf 0 gesetzt. Das lässt sich nicht rückgängig "
 "machen."
 
-#: extension.js:591
+#: extension.js:602
 msgid "Reset"
 msgstr "Zurücksetzen"
 
-#: extension.js:599
+#: extension.js:610
 msgid "Resetting the data limit failed: {error}"
 msgstr "Datenlimit zurücksetzen fehlgeschlagen: {error}"
 
-#: extension.js:602
+#: extension.js:613
 msgid "Data limit of {sim} reset"
 msgstr "Datenlimit von {sim} zurückgesetzt"
 
-#: extension.js:614
+#: extension.js:625
 msgid "Restart router?"
 msgstr "Router neu starten?"
 
-#: extension.js:615
+#: extension.js:626
 msgid ""
 "Internet and Wi-Fi are interrupted for a few minutes. Afterwards the router "
 "connects with the default SIM."
@@ -258,67 +258,67 @@ msgstr ""
 "Internet und WLAN sind für einige Minuten unterbrochen. Danach verbindet "
 "sich der Router mit der Standard-SIM."
 
-#: extension.js:617
+#: extension.js:628
 msgid "Restart"
 msgstr "Neu starten"
 
-#: extension.js:625
+#: extension.js:636
 msgid "Restart failed: {error}"
 msgstr "Neustart fehlgeschlagen: {error}"
 
-#: extension.js:627
+#: extension.js:638
 msgid "The RutOS user needs write access to System → Administration."
 msgstr "Der RutOS-Benutzer braucht Schreibrecht für System → Administration."
 
-#: extension.js:631
+#: extension.js:642
 msgid "Router is restarting"
 msgstr "Router startet neu"
 
-#: extension.js:632
+#: extension.js:643
 msgid "Router is restarting…"
 msgstr "Router startet neu …"
 
-#: extension.js:641
+#: extension.js:652
 msgid "The RutOS user needs write access to the mobile settings."
 msgstr "Der RutOS-Benutzer braucht Schreibrecht für die mobilen Einstellungen."
 
-#: extension.js:656
+#: extension.js:667
 msgid "Switching to {sim}…"
 msgstr "Wechsle zu {sim} …"
 
-#: extension.js:669
+#: extension.js:680
 msgid "SIM switch failed: {error}"
 msgstr "SIM-Wechsel fehlgeschlagen: {error}"
 
-#: extension.js:683
+#: extension.js:694
 msgid "SIM switch not confirmed – modem is no longer reported"
 msgstr "SIM-Wechsel nicht bestätigt – Modem wird nicht mehr gemeldet"
 
-#: extension.js:688
+#: extension.js:699
 msgid "{sim} is active ({status})"
 msgstr "{sim} ist aktiv ({status})"
 
-#: extension.js:690
+#: extension.js:701
 msgid "{sim} is active, but has no network yet"
 msgstr "{sim} ist aktiv, aber noch ohne Netz"
 
-#: extension.js:692
+#: extension.js:703
 msgid "{sim} active, connecting…"
 msgstr "{sim} aktiv, verbinde …"
 
-#: extension.js:700
+#: extension.js:711
 msgid "{sim} not reached – active is {active}"
 msgstr "{sim} nicht erreicht – aktiv ist {active}"
 
-#: extension.js:704
+#: extension.js:715
 msgid "Landed on {active}, switching on…"
 msgstr "Bei {active} gelandet, schalte weiter …"
 
-#: extension.js:709
+#: extension.js:720
 msgid "SIM switch not confirmed – active is {active}"
 msgstr "SIM-Wechsel nicht bestätigt – aktiv ist {active}"
 
-#: extension.js:712
+#: extension.js:723
 msgid "Switching to {sim}… (step {step})"
 msgstr "Wechsle zu {sim} … (Schritt {step})"
 

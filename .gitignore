@@ -4,3 +4,4 @@ schemas/gschemas.compiled
 .env
 __pycache__/
 dist/
+venv/
