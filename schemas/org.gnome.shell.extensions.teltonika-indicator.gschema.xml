@@ -31,6 +31,11 @@
       <summary>SIM-Aktionen im Menü anbieten (SIM-Wechsel, Standard-SIM, Datenlimit zurücksetzen)</summary>
       <description>Benötigt einen RutOS-Benutzer mit Schreibrecht für Netzwerk → Mobilfunk.</description>
     </key>
+    <key name="allow-reboot" type="b">
+      <default>false</default>
+      <summary>„Router neu starten“ im Menü anbieten</summary>
+      <description>Benötigt einen RutOS-Benutzer mit Schreibrecht für System → Administration.</description>
+    </key>
     <key name="hidden-sim-slots" type="ai">
       <default>[]</default>
       <summary>SIM-Steckplätze, die im Wechsel-Menü nicht angeboten werden</summary>

@@ -44,6 +44,9 @@ braucht er zusätzlich Schreibrecht für die mobilen Einstellungen.
 - Die API meldet den Betreiber nur für die aktive SIM. Der zuletzt gesehene Betreiber jeder SIM wird gemerkt
   und in den SIM-Menüs angezeigt, z. B. `SIM 3 (eSIM 1, MEDIONmobile)`. Eine SIM, die noch nie aktiv war, zeigt keinen.
 - Standard-SIM festlegen (eigenes Untermenü): ändert nur die Konfiguration, die aktive Verbindung bleibt.
+- „Router neu starten …“ (Einstellung „Router neu starten im Menü anbieten“, nach Bestätigung):
+  `POST /api/system/actions/reboot`. Braucht Schreibrecht für System → Administration. Die nächste Abfrage
+  kommt nach 60 s, danach greift der normale Backoff. Ausschalten lässt sich der Router über die API nicht.
 - „Erweiterung deaktivieren“ im Menü schaltet die Erweiterung aus (bleibt auch nach Neuanmeldung aus).
   Wieder einschalten über die App „Erweiterungen“ oder – bei Installation per `make install` – über den
   Starter „Teltonika Indicator“ in der App-Übersicht (führt `gnome-extensions enable …` aus).

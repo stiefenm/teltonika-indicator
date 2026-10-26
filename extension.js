@@ -24,6 +24,8 @@ const SIM_SWITCH_POLL_S = 5;
 const now = () => GLib.get_monotonic_time() / 1e6;
 // Je Schritt (switch_sim) auf die nächste SIM warten, bevor abgebrochen wird
 const SIM_HOP_TIMEOUT_S = 90;
+// Erste Abfrage nach einem Neustart des Routers, danach normaler Backoff
+const REBOOT_WAIT_S = 60;
 
 const QUALITY_ICONS = [
     'network-cellular-signal-none-symbolic',
@@ -146,6 +148,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._settingsIds = ['host', 'username', 'cert-fingerprint', 'password-serial'].map(k =>
             this._settings.connect(`changed::${k}`, () => this._onConnectionSettingsChanged()));
         this._settingsIds.push(this._settings.connect('changed::refresh-interval', () => this._reschedule(0)));
+        this._settingsIds.push(this._settings.connect('changed::allow-reboot', () => this._updateRebootItem()));
         for (const k of ['allow-sim-switch', 'hidden-sim-slots'])
             this._settingsIds.push(this._settings.connect(`changed::${k}`, () => this._reschedule(0)));
         for (const k of ['show-net-type', 'show-band', 'show-signal', 'show-operator', 'signal-metric'])
@@ -180,6 +183,8 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this.menu.addMenuItem(this._defaultItem);
         this._clearLimitItem = this.menu.addAction('Datenlimit zurücksetzen …', () => this._confirmClearLimit());
         this._clearLimitItem.visible = false;
+        this._rebootItem = this.menu.addAction('Router neu starten …', () => this._confirmReboot());
+        this._updateRebootItem();
         this.menu.addAction('Router-Weboberfläche öffnen', () => {
             const url = normalizeBaseUrl(this._settings.get_string('host'));
             if (url)
@@ -592,6 +597,38 @@ class TeltonikaIndicator extends PanelMenu.Button {
         this._reschedule(0);
     }
 
+    _updateRebootItem() {
+        this._rebootItem.visible = this._settings.get_boolean('allow-reboot');
+        this._rebootItem.sensitive = !this._switching;
+    }
+
+    _confirmReboot() {
+        if (this._switching)
+            return;
+        this._confirm('Router neu starten?',
+            'Internet und WLAN sind für einige Minuten unterbrochen. ' +
+            'Danach verbindet sich der Router mit der Standard-SIM.',
+            'Neu starten', () => this._reboot());
+    }
+
+    async _reboot() {
+        try {
+            await this._ensureClient().reboot(this._cancellable);
+        } catch (e) {
+            if (!this._cancellable.is_cancelled()) {
+                Main.notify('Teltonika Router', `Neustart fehlgeschlagen: ${e.message}${e.kind === 'forbidden'
+                    ? '\nDer RutOS-Benutzer braucht Schreibrecht für System → Administration.' : ''}`);
+            }
+            return;
+        }
+        Main.notify('Teltonika Router', 'Router startet neu');
+        this._setStatus('Router startet neu …');
+        // Nicht sofort abfragen: der Router antwortet sonst noch kurz vor dem Neustart
+        this._failures = 0;
+        this._lastError = '';
+        this._reschedule(REBOOT_WAIT_S);
+    }
+
     _rightsHint(e) {
         return e.kind === 'forbidden'
             ? '\nDer RutOS-Benutzer braucht Schreibrecht für die mobilen Einstellungen.' : '';
@@ -608,6 +645,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
             modemId: m.id, target: card, hops: 0, maxHops, lastKey: this._simKeyOf(m), hopStarted: now(),
         };
         this._updateSimItem();
+        this._updateRebootItem();
         this._setStatus(`Wechsle zu ${simLabel(card)} …`);
         await this._hop();
     }
@@ -669,6 +707,7 @@ class TeltonikaIndicator extends PanelMenu.Button {
     _finishSwitch(message) {
         this._switching = null;
         this._updateSimItem();
+        this._updateRebootItem();
         Main.notify('Teltonika Router', message);
     }
 

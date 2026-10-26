@@ -120,6 +120,8 @@ async function main() {
     }
     await rw.clearDataLimit('mob1s1a1');
     check((await rw.getDataLimits())[0].used === 0, 'clearDataLimit resets active SIM');
+    await rw.reboot();
+    check((await rw.getModems()).length === 2, 'reboot, then re-login');
     rw.destroy();
 
     const ro = new RouterClient({host: base, username: 'readonly', getPassword: async () => 'secret', fingerprint: fp});
@@ -138,6 +140,7 @@ async function main() {
     } catch (e) {
         check(e.kind === 'forbidden', 'read-only clear → forbidden', e.kind);
     }
+    await expectError(ro.reboot(), 'forbidden', 'read-only reboot → forbidden');
 
     const off = new RouterClient({host: 'http://127.0.0.1:1', username: 'x', getPassword: async () => 'x'});
     try {

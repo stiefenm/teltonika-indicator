@@ -3,7 +3,7 @@
 
 Endpunkte: POST /api/login, GET /api/modems/status, GET /api/sim_cards/status,
 PUT /api/sim_cards/config/{id}, POST /api/modems/{id}/actions/{switch_sim,restart_connection},
-GET /api/data_limit/status, GET /api/interfaces/config, POST /api/data_limit/actions/clear,
+GET /api/data_limit/status, GET /api/interfaces/config, POST /api/data_limit/actions/clear, POST /api/system/actions/reboot,
 POST /_test/expire (alle Tokens ungültig), POST /_test/fixture?name=…,
 GET /_test/logins (Anzahl Login-Versuche), GET /api/_test/{big,slow,redirect} (Robustheit des Clients)
 """
@@ -87,6 +87,11 @@ class H(BaseHTTPRequestHandler):
             if iface != active_interface("2-1"):
                 return self.reply(400, {"success": False, "errors": [{"code": 100, "error": "Interface is not active"}]})
             next(d for d in data_limits if d["id"] == iface)["data_used"] = "0"
+            return self.reply(200, {"success": True})
+        if u.path == "/api/system/actions/reboot":
+            if not self.can_write():
+                return
+            tokens.clear()  # nach dem Neustart gilt kein Token mehr
             return self.reply(200, {"success": True})
         if u.path == "/_test/expire":
             tokens.clear()

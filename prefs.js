@@ -41,7 +41,8 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         const group = new Adw.PreferencesGroup({
             title: 'Router',
             description: 'RutOS 7.x REST-API. Empfohlen: eigener Benutzer mit Leserechten ' +
-                '(plus Schreibrecht für Netzwerk → Mobilfunk, falls SIM-Aktionen gewünscht).',
+                '(plus Schreibrecht für Netzwerk → Mobilfunk bzw. System → Administration, ' +
+                'falls SIM-Aktionen oder Neustart gewünscht).',
         });
 
         const host = new Adw.EntryRow({title: 'Adresse (z. B. 192.168.1.1)', show_apply_button: true});
@@ -85,6 +86,13 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         group.add(sim);
 
         group.add(this._simSlotsRow(settings, cancellable));
+
+        const reboot = new Adw.SwitchRow({
+            title: '„Router neu starten“ im Menü anbieten',
+            subtitle: 'Benutzer braucht Schreibrecht für System → Administration',
+        });
+        settings.bind('allow-reboot', reboot, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(reboot);
 
         // use_markup aus: Betreiber und Fehlertexte kommen vom Router
         const test = new Adw.ActionRow({

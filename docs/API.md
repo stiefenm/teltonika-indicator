@@ -70,6 +70,13 @@ So macht es die WebUI (aus `/assets/app.mobile.app-*.js`, Firmware RUTM_R_00.07.
 - `POST /api/data_limit/actions/clear` mit `{"data":{"interface":"mob1s1a1"}}` setzt den Zähler zurück
   (wie der Button in der WebUI). Geht nur für das aktive Interface.
 
+## Neustart
+
+- `POST /api/system/actions/reboot` (ohne Body) → `{"success":true}`, danach startet der Router neu.
+  Rechtegruppe in der WebUI: System → Administration.
+- Einen Shutdown-Endpunkt gibt es nicht (Spec 7.25.3). `shutdown` kommt nur als Aktionstyp
+  der Event-Automatisierung vor, `power_control/*` nur beim ATRM50.
+
 ## Weitere Endpunkte (für v1.0)
 
 - `system/device/status` – Firmware, Modell
