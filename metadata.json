@@ -8,6 +8,6 @@
     "50"
   ],
   "settings-schema": "org.gnome.shell.extensions.teltonika-indicator",
-  "url": "",
+  "url": "https://github.com/stiefenm/teltonika-indicator",
   "version-name": "1.0.0"
 }
