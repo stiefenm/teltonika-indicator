@@ -63,8 +63,12 @@ async function main() {
     const c = new RouterClient({
         host: base, username: 'monitor', getPassword: async () => 'secret', fingerprint: expectFp ?? '',
     });
-    const modems = await c.getModems();
+    // Wie in der Extension: mit Cancellable
+    const cancellable = new Gio.Cancellable();
+    const modems = await c.getModems(cancellable);
     check(modems[0]?.operator === 'Telekom.de', 'getModems');
+    cancellable.cancel();
+    await expectError(c.getModems(cancellable), 'cancelled', 'cancelled before request → cancelled');
 
     await post('/_test/expire');
     const again = await c.getModems();
@@ -77,6 +81,12 @@ async function main() {
         host: base, username: 'monitor', getPassword: async () => 'secret', fingerprint: expectFp ?? '', maxTime: 2,
     });
     await expectError(slow.get('/_test/slow'), 'network', 'slow drip → total timeout');
+    const midway = new Gio.Cancellable();
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
+        midway.cancel();
+        return GLib.SOURCE_REMOVE;
+    });
+    await expectError(slow.get('/_test/slow', midway), 'cancelled', 'cancel during request → cancelled');
     slow.destroy();
 
     const nopw = new RouterClient({host: base, username: 'monitor', getPassword: async () => null});
