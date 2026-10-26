@@ -292,7 +292,8 @@ export default class TeltonikaPreferences extends ExtensionPreferences {
         }
 
         const combo = new Adw.ComboRow({
-            title: _('Signal value'),
+            title: _('Signal metric'),
+            subtitle: _('Shown when “Signal value” is on'),
             model: Gtk.StringList.new(METRICS.map(m => m[1])),
         });
         const sync = () => {

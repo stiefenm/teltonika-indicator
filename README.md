@@ -7,6 +7,11 @@ running RutOS 7.x in the top bar, e.g. `5G B3+B20+n78 −95 dBm`.
 The icon is colored by signal quality. The popup shows operator, network, band,
 RSSI/RSRP/RSRQ/SINR, SIM, modem temperature and data counters.
 
+<p>
+  <img src="docs/screenshots/popup.png" alt="Top bar and popup" width="280">
+  <img src="docs/screenshots/preferences.png" alt="Preferences" width="480">
+</p>
+
 Status: **v1.0**, tested with a Teltonika RUTM30 (RutOS 7.x) and against a mock router.
 API notes: [docs/API.md](docs/API.md) (German).
 

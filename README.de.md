@@ -7,6 +7,11 @@ mit RutOS 7.x in der oberen Leiste anzeigt, z. B. `5G B3+B20+n78 −95 dBm`.
 Das Icon ist nach Signalqualität eingefärbt. Das Popup zeigt Betreiber, Netz, Band,
 RSSI/RSRP/RSRQ/SINR, SIM, Modemtemperatur und Datenzähler.
 
+<p>
+  <img src="docs/screenshots/popup.png" alt="Leiste und Popup" width="280">
+  <img src="docs/screenshots/preferences.png" alt="Einstellungen" width="480">
+</p>
+
 Status: **v1.0**, getestet am Teltonika RUTM30 (RutOS 7.x) und gegen einen Mock-Router.
 Hintergrund: [docs/BRIEF.md](docs/BRIEF.md), API-Notizen: [docs/API.md](docs/API.md).
 

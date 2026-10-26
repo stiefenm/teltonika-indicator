@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: teltonika-indicator 1.0.0\n"
 "Report-Msgid-Bugs-To: https://github.com/stiefenm/teltonika-indicator/"
 "issues\n"
-"POT-Creation-Date: 2026-10-26 13:14+0100\n"
+"POT-Creation-Date: 2026-10-26 13:25+0100\n"
 "PO-Revision-Date: 2026-10-26 13:12+0100\n"
 "Last-Translator: Marek Stiefenhofer <sti@posteo.de>\n"
 "Language-Team: none\n"
@@ -494,15 +494,23 @@ msgstr "Anzeige in der Leiste"
 msgid "Network type (5G/4G/3G)"
 msgstr "Netztyp (5G/4G/3G)"
 
-#: prefs.js:287 prefs.js:295
+#: prefs.js:287
 msgid "Signal value"
 msgstr "Signalwert"
 
-#: prefs.js:309
+#: prefs.js:295
+msgid "Signal metric"
+msgstr "Signalart"
+
+#: prefs.js:296
+msgid "Shown when “Signal value” is on"
+msgstr "Angezeigt, wenn „Signalwert“ an ist"
+
+#: prefs.js:310
 msgid "Data limit warning"
 msgstr "Datenlimit-Warnung"
 
-#: prefs.js:310
+#: prefs.js:311
 msgid ""
 "Yellow warning icon from this usage in percent, 0 = only when the limit is "
 "used up (red)"
