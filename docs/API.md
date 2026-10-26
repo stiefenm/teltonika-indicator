@@ -1,9 +1,11 @@
 # RutOS-REST-API – Notizen für den RUTM30
 
-Stand 2026-10-16. Quelle: Teltonikas OpenAPI-Spec 7.25.3 / API v1.17.3
+Stand 2026-10-26. Quelle: Teltonikas OpenAPI-Spec 7.25.3 / API v1.17.3
 (`https://developers.teltonika-networks.com/docs/7.25.3_v1.17.3.json`; der RUTM30 ist dort gelistet),
 dazu die Fixtures aus `kozaktomas/teltonika-exporter` und `karlbeecken/teltasync`.
-**Am echten Gerät noch nicht verifiziert** → `scripts/capture-fixtures.sh`.
+Am RUTM30 (Firmware RUTM_R_00.07.24.6) geprüft: Login, `modems/status`, SIM-Wechsel, Standard-SIM,
+Datenlimit und Neustart; die echten Antworten liegen maskiert in `test/fixtures/rutm30_*.json`
+(`scripts/capture-fixtures.sh`). Offen: welche WebUI-Rechtegruppe genau welche Schreibrechte gibt.
 
 ## RUTM30
 

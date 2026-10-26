@@ -1,14 +1,17 @@
 [Desktop Entry]
 Type=Application
 Name=Teltonika Indicator
-Comment=Mobilfunk-Status des Teltonika-Routers in der oberen Leiste anzeigen
+Comment=Show the cellular status of a Teltonika router in the top bar
+Comment[de]=Mobilfunk-Status des Teltonika-Routers in der oberen Leiste anzeigen
 Exec=gnome-extensions enable teltonika-indicator@mstiefenhofer
 Icon=teltonika-indicator
 Terminal=false
 Categories=Network;Monitor;
-Keywords=Teltonika;Router;Mobilfunk;LTE;5G;SIM;
+Keywords=Teltonika;Router;Cellular;Mobile;LTE;5G;SIM;
+Keywords[de]=Teltonika;Router;Mobilfunk;LTE;5G;SIM;
 Actions=preferences;
 
 [Desktop Action preferences]
-Name=Einstellungen
+Name=Preferences
+Name[de]=Einstellungen
 Exec=gnome-extensions prefs teltonika-indicator@mstiefenhofer

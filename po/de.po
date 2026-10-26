@@ -1,0 +1,575 @@
+# German translation for teltonika-indicator.
+# This file is distributed under the same license as the teltonika-indicator package (GPL-2.0-or-later).
+# Marek Stiefenhofer <sti@posteo.de>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: teltonika-indicator 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/stiefenm/teltonika-indicator/"
+"issues\n"
+"POT-Creation-Date: 2026-10-26 13:14+0100\n"
+"PO-Revision-Date: 2026-10-26 13:12+0100\n"
+"Last-Translator: Marek Stiefenhofer <sti@posteo.de>\n"
+"Language-Team: none\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: extension.js:49
+msgid "Not configured"
+msgstr "Nicht konfiguriert"
+
+#: extension.js:50
+msgid "No password available"
+msgstr "Kein Passwort verfügbar"
+
+#: extension.js:51
+msgid "Login failed"
+msgstr "Anmeldung fehlgeschlagen"
+
+#: extension.js:52
+msgid "Missing permission"
+msgstr "Fehlende Berechtigung"
+
+#: extension.js:53
+msgid "Certificate not confirmed – click “Test” in the preferences"
+msgstr "Zertifikat nicht bestätigt – in den Einstellungen „Testen“"
+
+#: extension.js:54
+msgid "Certificate changed – connection blocked"
+msgstr "Zertifikat geändert – Verbindung blockiert"
+
+#: extension.js:55
+msgid "Router not reachable"
+msgstr "Router nicht erreichbar"
+
+#: extension.js:56
+msgid "Error from router"
+msgstr "Fehler vom Router"
+
+#: extension.js:57
+msgid "Unexpected response"
+msgstr "Unerwartete Antwort"
+
+#: extension.js:61 prefs.js:284
+msgid "Operator"
+msgstr "Betreiber"
+
+#: extension.js:62
+msgid "Network"
+msgstr "Netz"
+
+#: extension.js:63 prefs.js:286
+msgid "Band"
+msgstr "Band"
+
+#: extension.js:68
+msgid "SIM"
+msgstr "SIM"
+
+#: extension.js:69
+msgid "Modem temperature"
+msgstr "Modem-Temperatur"
+
+#: extension.js:70
+msgid "Data ↑/↓"
+msgstr "Daten ↑/↓"
+
+#: extension.js:71
+msgid "Data limit"
+msgstr "Datenlimit"
+
+#: extension.js:72
+msgid "Limit reset"
+msgstr "Limit-Reset"
+
+#: extension.js:176
+msgid "Refresh now"
+msgstr "Jetzt aktualisieren"
+
+#: extension.js:177 extension.js:490
+msgid "Switch SIM"
+msgstr "SIM wechseln"
+
+#: extension.js:181
+msgid "Default SIM"
+msgstr "Standard-SIM"
+
+#: extension.js:185
+msgid "Reset data limit…"
+msgstr "Datenlimit zurücksetzen …"
+
+#: extension.js:187
+msgid "Restart router…"
+msgstr "Router neu starten …"
+
+#: extension.js:189
+msgid "Open router web interface"
+msgstr "Router-Weboberfläche öffnen"
+
+#: extension.js:194
+msgid "Preferences"
+msgstr "Einstellungen"
+
+#: extension.js:198
+msgid "Disable extension"
+msgstr "Erweiterung deaktivieren"
+
+#: extension.js:208 prefs.js:111
+msgid "Connecting…"
+msgstr "Verbinde …"
+
+#: extension.js:256
+msgid "Enter the router address in the preferences"
+msgstr "Router-Adresse in den Einstellungen eintragen"
+
+#: extension.js:325
+msgid "SIM switch not confirmed – router not reachable"
+msgstr "SIM-Wechsel nicht bestätigt – Router nicht erreichbar"
+
+#: extension.js:356
+msgid "Error"
+msgstr "Fehler"
+
+#: extension.js:388
+msgid "No modem found"
+msgstr "Kein Modem gefunden"
+
+#: extension.js:392
+msgid "{modem} · as of {time}"
+msgstr "{modem} · Stand {time}"
+
+#: extension.js:392
+msgid "Modem"
+msgstr "Modem"
+
+#. Translators: GLib date format for the next automatic limit reset, e.g. “Mon Nov 3, 00:00”
+#: extension.js:427
+msgid "%a %b %-d, %H:%M"
+msgstr "%a %d.%m. %H:%M"
+
+#: extension.js:444
+msgid "Data limit of {sim} used up ({usage})"
+msgstr "Datenlimit von {sim} ausgeschöpft ({usage})"
+
+#: extension.js:445
+msgid "{sim}: data limit almost reached ({usage})"
+msgstr "{sim}: Datenlimit fast erreicht ({usage})"
+
+#: extension.js:490
+msgid "Switching SIM…"
+msgstr "SIM-Wechsel läuft …"
+
+#: extension.js:493
+msgid "Switch to {sim}"
+msgstr "Zu {sim} wechseln"
+
+#: extension.js:498
+msgid "Default SIM: {sim}"
+msgstr "Standard-SIM: {sim}"
+
+#: extension.js:501
+msgid "Set {sim} as default"
+msgstr "{sim} als Standard festlegen"
+
+#: extension.js:507
+msgid "limit {percent} %"
+msgstr "Limit {percent} %"
+
+#: extension.js:526 prefs.js:168
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: extension.js:550
+msgid "Switch to {sim}?"
+msgstr "Zu {sim} wechseln?"
+
+#: extension.js:551
+msgid ""
+"The router switches to the next SIM, several times if necessary, until {sim} "
+"is active. The mobile connection is interrupted for a few seconds up to a "
+"few minutes. The default SIM stays unchanged."
+msgstr ""
+"Der Router schaltet zur nächsten SIM, notfalls mehrmals, bis {sim} aktiv "
+"ist. Die Mobilfunkverbindung ist dabei für einige Sekunden bis wenige "
+"Minuten unterbrochen. Die Standard-SIM bleibt unverändert."
+
+#: extension.js:554
+msgid "Switch"
+msgstr "Wechseln"
+
+#: extension.js:563
+msgid "Set {sim} as default SIM?"
+msgstr "{sim} als Standard-SIM festlegen?"
+
+#: extension.js:564
+msgid ""
+"The active connection stays up. The default SIM is used e.g. after a router "
+"restart or when the connection is re-established."
+msgstr ""
+"Die aktive Verbindung bleibt bestehen. Die Standard-SIM wird z. B. nach "
+"einem Neustart des Routers oder einem Verbindungsneuaufbau verwendet."
+
+#: extension.js:566
+msgid "Set as default"
+msgstr "Festlegen"
+
+#: extension.js:574
+msgid "Changing the default SIM failed: {error}"
+msgstr "Standard-SIM ändern fehlgeschlagen: {error}"
+
+#: extension.js:580
+msgid "Default SIM is now {sim}"
+msgstr "Standard-SIM ist jetzt {sim}"
+
+#: extension.js:589
+msgid "Reset data limit of {sim}?"
+msgstr "Datenlimit von {sim} zurücksetzen?"
+
+#: extension.js:590
+msgid "The counter ({usage}) is set to 0. This cannot be undone."
+msgstr ""
+"Der Zähler ({usage}) wird auf 0 gesetzt. Das lässt sich nicht rückgängig "
+"machen."
+
+#: extension.js:591
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+#: extension.js:599
+msgid "Resetting the data limit failed: {error}"
+msgstr "Datenlimit zurücksetzen fehlgeschlagen: {error}"
+
+#: extension.js:602
+msgid "Data limit of {sim} reset"
+msgstr "Datenlimit von {sim} zurückgesetzt"
+
+#: extension.js:614
+msgid "Restart router?"
+msgstr "Router neu starten?"
+
+#: extension.js:615
+msgid ""
+"Internet and Wi-Fi are interrupted for a few minutes. Afterwards the router "
+"connects with the default SIM."
+msgstr ""
+"Internet und WLAN sind für einige Minuten unterbrochen. Danach verbindet "
+"sich der Router mit der Standard-SIM."
+
+#: extension.js:617
+msgid "Restart"
+msgstr "Neu starten"
+
+#: extension.js:625
+msgid "Restart failed: {error}"
+msgstr "Neustart fehlgeschlagen: {error}"
+
+#: extension.js:627
+msgid "The RutOS user needs write access to System → Administration."
+msgstr "Der RutOS-Benutzer braucht Schreibrecht für System → Administration."
+
+#: extension.js:631
+msgid "Router is restarting"
+msgstr "Router startet neu"
+
+#: extension.js:632
+msgid "Router is restarting…"
+msgstr "Router startet neu …"
+
+#: extension.js:641
+msgid "The RutOS user needs write access to the mobile settings."
+msgstr "Der RutOS-Benutzer braucht Schreibrecht für die mobilen Einstellungen."
+
+#: extension.js:656
+msgid "Switching to {sim}…"
+msgstr "Wechsle zu {sim} …"
+
+#: extension.js:669
+msgid "SIM switch failed: {error}"
+msgstr "SIM-Wechsel fehlgeschlagen: {error}"
+
+#: extension.js:683
+msgid "SIM switch not confirmed – modem is no longer reported"
+msgstr "SIM-Wechsel nicht bestätigt – Modem wird nicht mehr gemeldet"
+
+#: extension.js:688
+msgid "{sim} is active ({status})"
+msgstr "{sim} ist aktiv ({status})"
+
+#: extension.js:690
+msgid "{sim} is active, but has no network yet"
+msgstr "{sim} ist aktiv, aber noch ohne Netz"
+
+#: extension.js:692
+msgid "{sim} active, connecting…"
+msgstr "{sim} aktiv, verbinde …"
+
+#: extension.js:700
+msgid "{sim} not reached – active is {active}"
+msgstr "{sim} nicht erreicht – aktiv ist {active}"
+
+#: extension.js:704
+msgid "Landed on {active}, switching on…"
+msgstr "Bei {active} gelandet, schalte weiter …"
+
+#: extension.js:709
+msgid "SIM switch not confirmed – active is {active}"
+msgstr "SIM-Wechsel nicht bestätigt – aktiv ist {active}"
+
+#: extension.js:712
+msgid "Switching to {sim}… (step {step})"
+msgstr "Wechsle zu {sim} … (Schritt {step})"
+
+#: prefs.js:43
+msgid "Router"
+msgstr "Router"
+
+#: prefs.js:44
+msgid ""
+"RutOS 7.x REST API. Recommended: a separate user with read access (plus "
+"write access to Network → Mobile or System → Administration for SIM actions "
+"or restarting)."
+msgstr ""
+"RutOS 7.x REST-API. Empfohlen: eigener Benutzer mit Leserechten (plus "
+"Schreibrecht für Netzwerk → Mobilfunk bzw. System → Administration, falls "
+"SIM-Aktionen oder Neustart gewünscht)."
+
+#: prefs.js:49
+msgid "Address (e.g. 192.168.1.1)"
+msgstr "Adresse (z. B. 192.168.1.1)"
+
+#: prefs.js:54
+msgid "Username"
+msgstr "Benutzername"
+
+#: prefs.js:59
+msgid "Password (keyring)"
+msgstr "Passwort (Schlüsselbund)"
+
+#: prefs.js:69
+msgid "Saving failed: {error}"
+msgstr "Speichern fehlgeschlagen: {error}"
+
+#: prefs.js:74
+msgid "Refresh interval"
+msgstr "Abfrageintervall"
+
+#: prefs.js:75
+msgid "Seconds"
+msgstr "Sekunden"
+
+#: prefs.js:82
+msgid "Offer SIM actions in the menu"
+msgstr "SIM-Aktionen im Menü anbieten"
+
+#: prefs.js:83
+msgid ""
+"Switch SIM, default SIM and reset data limit – the user needs write access "
+"to the mobile settings"
+msgstr ""
+"SIM-Wechsel, Standard-SIM und Datenlimit zurücksetzen – Benutzer braucht "
+"Schreibrecht für die mobilen Einstellungen"
+
+#: prefs.js:92
+msgid "Offer “Restart router” in the menu"
+msgstr "„Router neu starten“ im Menü anbieten"
+
+#: prefs.js:93
+msgid "The user needs write access to System → Administration"
+msgstr "Benutzer braucht Schreibrecht für System → Administration"
+
+#: prefs.js:100
+msgid "Test connection"
+msgstr "Verbindung testen"
+
+#: prefs.js:100
+msgid "Applies pending input first"
+msgstr "Übernimmt zuerst offene Eingaben"
+
+#: prefs.js:102
+msgid "Test"
+msgstr "Testen"
+
+#: prefs.js:118
+msgid "Error ({kind}): {error}"
+msgstr "Fehler ({kind}): {error}"
+
+#: prefs.js:118
+msgid "unknown"
+msgstr "unbekannt"
+
+#: prefs.js:141
+msgid "OK – {status}"
+msgstr "OK – {status}"
+
+#: prefs.js:142
+msgid "OK – but no modem reported"
+msgstr "OK – aber kein Modem gemeldet"
+
+#: prefs.js:147
+msgid "Cancelled – certificate not confirmed"
+msgstr "Abgebrochen – Zertifikat nicht bestätigt"
+
+#: prefs.js:157
+msgid "Certificate has changed"
+msgstr "Zertifikat hat sich geändert"
+
+#: prefs.js:157
+msgid "Confirm certificate"
+msgstr "Zertifikat bestätigen"
+
+#: prefs.js:159
+msgid ""
+"The router presents a different certificate than before. This is normal "
+"after a firmware update or reset, but it can also be an attack on the "
+"network."
+msgstr ""
+"Der Router meldet ein anderes Zertifikat als bisher. Das ist nach einem "
+"Firmware-Update oder Zurücksetzen normal, kann aber auch ein Angriff im Netz "
+"sein."
+
+#: prefs.js:161
+msgid ""
+"The router’s certificate is self-signed. Only trust it if the fingerprint "
+"matches."
+msgstr ""
+"Das Zertifikat des Routers ist selbstsigniert. Vertraue ihm nur, wenn der "
+"Fingerprint stimmt."
+
+#: prefs.js:163
+msgid "To compare, over a secure path (e.g. via cable):"
+msgstr "Zum Vergleich, auf einem sicheren Weg (z. B. per Kabel):"
+
+#: prefs.js:169
+msgid "Trust"
+msgstr "Vertrauen"
+
+#: prefs.js:195
+msgid "SIM slots in the menu"
+msgstr "SIM-Slots im Menü"
+
+#: prefs.js:196
+msgid ""
+"Turn off empty slots – the router does not report whether a slot is occupied"
+msgstr ""
+"Leere Slots ausschalten – der Router meldet nicht, ob ein Slot belegt ist"
+
+#: prefs.js:218
+msgid "Last seen: {operator}"
+msgstr "Zuletzt: {operator}"
+
+#: prefs.js:260
+msgid "Certificate"
+msgstr "Zertifikat"
+
+#: prefs.js:261
+msgid ""
+"Self-signed certificates are pinned after confirmation when you click "
+"“Test”. If the certificate changes, the connection is blocked until it is "
+"confirmed again."
+msgstr ""
+"Selbstsignierte Zertifikate werden beim „Testen“ nach Bestätigung gepinnt. "
+"Ändert sich das Zertifikat, wird die Verbindung blockiert, bis es erneut "
+"bestätigt wird."
+
+#: prefs.js:264
+msgid "SHA-256 fingerprint"
+msgstr "SHA-256-Fingerprint"
+
+#: prefs.js:268
+msgid "none saved yet"
+msgstr "noch keiner gespeichert"
+
+#: prefs.js:273
+msgid "Forget"
+msgstr "Vergessen"
+
+#: prefs.js:282
+msgid "Shown in the top bar"
+msgstr "Anzeige in der Leiste"
+
+#: prefs.js:285
+msgid "Network type (5G/4G/3G)"
+msgstr "Netztyp (5G/4G/3G)"
+
+#: prefs.js:287 prefs.js:295
+msgid "Signal value"
+msgstr "Signalwert"
+
+#: prefs.js:309
+msgid "Data limit warning"
+msgstr "Datenlimit-Warnung"
+
+#: prefs.js:310
+msgid ""
+"Yellow warning icon from this usage in percent, 0 = only when the limit is "
+"used up (red)"
+msgstr ""
+"Gelbes Warnsymbol ab diesem Verbrauch in Prozent, 0 = nur bei ausgeschöpftem "
+"Limit (rot)"
+
+#: lib/client.js:83
+msgid "Invalid router address: {address}"
+msgstr "Ungültige Router-Adresse: {address}"
+
+#: lib/client.js:100
+msgid "Client stopped"
+msgstr "Client beendet"
+
+#: lib/client.js:123
+msgid "The router’s certificate has changed"
+msgstr "Zertifikat des Routers hat sich geändert"
+
+#: lib/client.js:124
+msgid "The router’s certificate is not confirmed yet"
+msgstr "Zertifikat des Routers noch nicht bestätigt"
+
+#: lib/client.js:128
+msgid "Timed out"
+msgstr "Zeitüberschreitung"
+
+#: lib/client.js:130
+msgid "Cancelled"
+msgstr "Abgebrochen"
+
+#: lib/client.js:140
+msgid "Router redirects (HTTP {status}) – check the address"
+msgstr "Router leitet um (HTTP {status}) – Adresse prüfen"
+
+#: lib/client.js:147
+msgid "Response is not JSON"
+msgstr "Antwort ist kein JSON"
+
+#: lib/client.js:154
+msgid "Response from the router is too large"
+msgstr "Antwort des Routers zu groß"
+
+#: lib/client.js:184
+msgid "No router address configured"
+msgstr "Keine Router-Adresse konfiguriert"
+
+#: lib/client.js:189
+msgid "Keyring not available: {error}"
+msgstr "Schlüsselbund nicht verfügbar: {error}"
+
+#: lib/client.js:192
+msgid "No password stored"
+msgstr "Kein Passwort hinterlegt"
+
+#: lib/client.js:202
+msgid "Login failed: {error}"
+msgstr "Login fehlgeschlagen: {error}"
+
+#: lib/client.js:232
+msgid "No permission for {request}"
+msgstr "Keine Berechtigung für {request}"
+
+#: lib/client.js:240
+msgid "Login rejected"
+msgstr "Login abgelehnt"
+
+#: lib/parse.js:130
+msgid "Invalid response from modems/status"
+msgstr "Ungültige Antwort von modems/status"

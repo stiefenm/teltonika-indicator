@@ -4,7 +4,7 @@ DATA_HOME ?= $(or $(XDG_DATA_HOME),$(HOME)/.local/share)
 DESKTOP := $(DATA_HOME)/applications/teltonika-indicator.desktop
 ICON := $(DATA_HOME)/icons/hicolor/scalable/apps/teltonika-indicator.svg
 
-.PHONY: all pack install uninstall test schemas clean
+.PHONY: all pack install uninstall test schemas pot po clean
 
 all: pack
 
@@ -13,8 +13,18 @@ schemas:
 
 pack:
 	mkdir -p dist
-	gnome-extensions pack --force --out-dir=dist \
+	gnome-extensions pack --force --out-dir=dist --podir=po \
 		$(foreach f,$(EXTRA),--extra-source=$(f)) .
+
+# Vorlage aus dem Quelltext neu erzeugen und in die Übersetzungen einpflegen
+pot:
+	xgettext --from-code=UTF-8 --language=JavaScript --keyword=_ --keyword=N_ \
+		--add-comments=Translators: --package-name=teltonika-indicator \
+		--msgid-bugs-address=https://github.com/stiefenm/teltonika-indicator/issues \
+		--files-from=po/POTFILES --output=po/teltonika-indicator.pot
+
+po: pot
+	for f in po/*.po; do msgmerge --update --backup=none $$f po/teltonika-indicator.pot; done
 
 install: pack
 	gnome-extensions install --force dist/$(UUID).shell-extension.zip
