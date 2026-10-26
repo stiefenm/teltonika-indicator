@@ -70,7 +70,7 @@ So macht es die WebUI (aus `/assets/app.mobile.app-*.js`, Firmware RUTM_R_00.07.
 - `POST /api/data_limit/actions/clear` mit `{"data":{"interface":"mob1s1a1"}}` setzt den Zähler zurück
   (wie der Button in der WebUI). Geht nur für das aktive Interface.
 
-## Neustart
+## Neustart (am RUTM30 geprüft)
 
 - `POST /api/system/actions/reboot` (ohne Body) → `{"success":true}`, danach startet der Router neu.
   Rechtegruppe in der WebUI: System → Administration.
